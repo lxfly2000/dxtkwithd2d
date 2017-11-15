@@ -15,3 +15,6 @@
 * 在创建D2D的DXGI渲染目标时的像素格式指定为`D2D1_ALPHA_MODE_PREMULTIPLIED`。
 
 不知道是微软搞错了还是我哪里没有弄清楚，总之先记录一下。
+
+### Note
+如果要在Win7系统中运行该程序需要在编译时将代码中的`D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT`改为`D2D1_DRAW_TEXT_OPTIONS_NONE`，否则将无法显示文字。

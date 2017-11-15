@@ -107,7 +107,7 @@ void GameLite::Update()
 	auto mousepos = mouse->GetState();
 	circle.point.x = static_cast<float>(mousepos.x);
 	circle.point.y = static_cast<float>(mousepos.y);
-	wsprintf(cursorposText, L"%4d,%4d", mousepos.x, mousepos.y);
+	wsprintf(cursorposText, PICPOS_FORMAT, mousepos.x, mousepos.y);
 
 	fcounter++;
 }
@@ -125,6 +125,8 @@ void GameLite::Draw()
 	//Clear操作已由DXTK完成故不再需要调用ID2D1RenderTarget::Clear
 	d2drendertarget->DrawEllipse(circle, outlineBrush, 8.0f);
 	d2drendertarget->DrawEllipse(circle, circleBrush, 4.0f);
+	//D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT：绘制彩色文字，要求系统为Win8.1/10，在Win7中会使D2D区域无法显示
+	//D2D1_DRAW_TEXT_OPTIONS_NONE：不使用高级绘制选项
 	d2drendertarget->DrawText(cursorposText, lstrlen(cursorposText), textformat.Get(),
 		D2D1::RectF((float)screenSize.left, (float)screenSize.top, (float)screenSize.right,
 		(float)screenSize.bottom), circleBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT);

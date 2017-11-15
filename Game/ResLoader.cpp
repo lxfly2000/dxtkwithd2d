@@ -282,7 +282,7 @@ HRESULT ResLoader::LoadFontFromSystem(std::unique_ptr<SpriteFont> &outSF, unsign
 		if (drawPos.y + chHeight > textureHeight)return -1;
 		eachglyph.Subrect.left = std::lround(drawPos.x);
 		eachglyph.Subrect.top = std::lround(drawPos.y);
-		//可绘制彩色文字
+		//可绘制彩色文字（绘制彩色文字功能要求系统为Win8.1/10，在Win7中会使D2D区域无法显示）
 		fontRT->DrawText(str, lstrlen(str), textformat, D2D1::RectF(drawPos.x + ovhMet.left, drawPos.y,
 			(float)textureWidth, (float)textureHeight), fontColorBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT);
 		float chPxWidth = textlayout->GetMaxWidth() + ovhMet.left + ovhMet.right;
