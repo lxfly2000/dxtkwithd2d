@@ -390,13 +390,87 @@ HRESULT CreateD2DImageFromFile(ComPtr<ID2D1Bitmap> &pic, ID2D1RenderTarget *prt,
 	return S_OK;
 }
 
-HRESULT CreateDWTextFormat(ComPtr<IDWriteTextFormat> &textformat, LPCWSTR fontName, DWRITE_FONT_WEIGHT fontWeight,
+HRESULT CreateDWTextFormat(ComPtr<IDWriteTextFormat> &textformat,
+	LPCWSTR fontName, DWRITE_FONT_WEIGHT fontWeight,
 	FLOAT fontSize, DWRITE_FONT_STYLE fontStyle, DWRITE_FONT_STRETCH fontExpand, LPCWSTR localeName)
 {
-	IDWriteFactory *dwfactory;
+	ComPtr<IDWriteFactory> dwfactory;
 	C(DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(dwfactory), (IUnknown**)&dwfactory));
 	C(dwfactory->CreateTextFormat(fontName, NULL, fontWeight, fontStyle, fontExpand, fontSize, localeName,
 		textformat.ReleaseAndGetAddressOf()));
-	dwfactory->Release();
 	return S_OK;
+}
+
+HRESULT CreateDWFontFace(Microsoft::WRL::ComPtr<IDWriteFontFace>& fontface, LPCWSTR fontName,
+	DWRITE_FONT_WEIGHT fontWeight, DWRITE_FONT_STYLE fontStyle, DWRITE_FONT_STRETCH fontExpand)
+{
+	ComPtr<IDWriteFactory> dwfactory;
+	C(DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(dwfactory), (IUnknown**)&dwfactory));
+	ComPtr<IDWriteFontCollection> fontcollection;
+	C(dwfactory->GetSystemFontCollection(&fontcollection));
+	UINT fontfamilypos;
+	BOOL ffexists;
+	C(fontcollection->FindFamilyName(fontName, &fontfamilypos, &ffexists));
+	ComPtr<IDWriteFontFamily> ffamily;
+	C(fontcollection->GetFontFamily(fontfamilypos, &ffamily));
+	ComPtr<IDWriteFontList> flist;
+	C(ffamily->GetMatchingFonts(fontWeight, fontExpand, fontStyle, &flist));
+	ComPtr<IDWriteFont> dwfont;
+	C(flist->GetFont(0, &dwfont));
+	C(dwfont->CreateFontFace(&fontface));
+	return S_OK;
+}
+
+HRESULT CreateDWFontFace(Microsoft::WRL::ComPtr<IDWriteFontFace>& fontface, IDWriteTextFormat * textformat)
+{
+	TCHAR fontName[256];
+	C(textformat->GetFontFamilyName(fontName, ARRAYSIZE(fontName)));
+	C(CreateDWFontFace(fontface, fontName,
+		textformat->GetFontWeight(), textformat->GetFontStyle(), textformat->GetFontStretch()));
+	return S_OK;
+}
+
+constexpr float PointToDip(float pointsize)
+{
+	//https://www.codeproject.com/articles/376597/outline-text-with-directwrite#source
+	return pointsize*96.0f / 72.0f;
+}
+
+HRESULT CreateD2DGeometryFromText(Microsoft::WRL::ComPtr<ID2D1PathGeometry>& geometry, ID2D1Factory *factory,
+	IDWriteFontFace* pfontface, float fontSize, const wchar_t * text, size_t textlength)
+{
+	std::vector<UINT32> unicode_ui32;
+	for (size_t i = 0; i < textlength; i++)
+		unicode_ui32.push_back(static_cast<UINT32>(text[i]));
+	std::unique_ptr<UINT16>gidcs(new UINT16[textlength]);
+	C(pfontface->GetGlyphIndicesW(unicode_ui32.data(), static_cast<UINT32>(unicode_ui32.size()), gidcs.get()));
+	C(factory->CreatePathGeometry(geometry.ReleaseAndGetAddressOf()));
+	ID2D1GeometrySink *gs;
+	C(geometry->Open(&gs));
+	C(pfontface->GetGlyphRunOutline(PointToDip(fontSize), gidcs.get(), NULL, NULL,
+		static_cast<UINT32>(textlength), FALSE, FALSE, gs));
+	C(gs->Close());
+	gs->Release();
+	return S_OK;
+}
+
+HRESULT CreateD2DLinearGradientBrush(Microsoft::WRL::ComPtr<ID2D1LinearGradientBrush>& lgBrush, ID2D1RenderTarget * rt,
+	float startX, float startY, float endX, float endY, D2D1_COLOR_F startColor, D2D1_COLOR_F endColor)
+{
+	//https://msdn.microsoft.com/zh-cn/library/dd756678(v=vs.85).aspx
+	ComPtr<ID2D1GradientStopCollection> gsc;
+	D2D1_GRADIENT_STOP gs[2] = { {0.0f,startColor},{1.0f,endColor} };
+	C(rt->CreateGradientStopCollection(gs, ARRAYSIZE(gs), gsc.ReleaseAndGetAddressOf()));
+	C(rt->CreateLinearGradientBrush(D2D1::LinearGradientBrushProperties(D2D1::Point2F(startX, startY),
+		D2D1::Point2F(endX, endY)), gsc.Get(), lgBrush.ReleaseAndGetAddressOf()));
+	return S_OK;
+}
+
+void D2DDrawGeometryWithOutline(ID2D1RenderTarget * rt, ID2D1Geometry * geometry,
+	float x, float y, ID2D1Brush * fillBrush, ID2D1Brush * outlineBrush, float outlineWidth)
+{
+	rt->SetTransform(D2D1::Matrix3x2F::Translation(x, y));
+	rt->FillGeometry(geometry, fillBrush);
+	rt->DrawGeometry(geometry, outlineBrush, outlineWidth);
+	rt->SetTransform(D2D1::IdentityMatrix());
 }

@@ -39,6 +39,8 @@ void GameLite::Init(ID3D11Device *pdevice, ID3D11DeviceContext *pcontext, ID2D1F
 	pressing_p = false;
 
 	CreateDWTextFormat(textformat, L"ËÎÌו", DWRITE_FONT_WEIGHT_NORMAL, 48.0f);
+	CreateDWFontFace(fontface, textformat.Get());
+	CreateD2DGeometryFromText(btgeometry, d2ddevice, fontface.Get(), textformat->GetFontSize(), L"Hello!", 6);
 	textformat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
 	//textformat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 	circle.radiusX = circle.radiusY = 120.0f;
@@ -61,6 +63,8 @@ void GameLite::InitD2D(IDXGISwapChain *pswchain)
 
 	d2drendertarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &circleBrush);
 	d2drendertarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::OrangeRed), &outlineBrush);
+	CreateD2DLinearGradientBrush(bluetowhiteBrush, d2drendertarget, 0, -50, 0, 0,
+		D2D1::ColorF(D2D1::ColorF::Blue), D2D1::ColorF(D2D1::ColorF::White));
 }
 
 void GameLite::UninitD2D()
@@ -130,6 +134,8 @@ void GameLite::Draw()
 	d2drendertarget->DrawText(cursorposText, lstrlen(cursorposText), textformat.Get(),
 		D2D1::RectF((float)screenSize.left, (float)screenSize.top, (float)screenSize.right,
 		(float)screenSize.bottom), circleBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT);
+	D2DDrawGeometryWithOutline(d2drendertarget, btgeometry.Get(), 0, (float)screenSize.bottom,
+		bluetowhiteBrush.Get(), outlineBrush, 1);
 	d2drendertarget->EndDraw();
 
 	if (!isPausedFromSystem)

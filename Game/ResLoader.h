@@ -51,6 +51,24 @@ HRESULT WicBitmapConvertPremultiplyAlpha(IWICBitmap *wicbitmap,
 HRESULT CreateD2DImageFromFile(Microsoft::WRL::ComPtr<ID2D1Bitmap> &pic, ID2D1RenderTarget *prt, LPCWSTR ppath);
 //————————DWrite函数————————
 //需要引入库 DWrite.lib.
-HRESULT CreateDWTextFormat(Microsoft::WRL::ComPtr<IDWriteTextFormat> &textformat, LPCWSTR fontName, DWRITE_FONT_WEIGHT fontWeight,
+HRESULT CreateDWTextFormat(Microsoft::WRL::ComPtr<IDWriteTextFormat> &textformat,
+	LPCWSTR fontName, DWRITE_FONT_WEIGHT fontWeight,
 	FLOAT fontSize, DWRITE_FONT_STYLE fontStyle = DWRITE_FONT_STYLE_NORMAL,
 	DWRITE_FONT_STRETCH fontExpand = DWRITE_FONT_STRETCH_NORMAL, LPCWSTR localeName = L"");
+//【注意】字体名称必须保证是有效的。
+HRESULT CreateDWFontFace(Microsoft::WRL::ComPtr<IDWriteFontFace> &fontface, LPCWSTR fontName,
+	DWRITE_FONT_WEIGHT fontWeight, DWRITE_FONT_STYLE fontStyle, DWRITE_FONT_STRETCH fontExpand);
+HRESULT CreateDWFontFace(Microsoft::WRL::ComPtr<IDWriteFontFace> &fontface, IDWriteTextFormat *textformat);
+//根据指定的文字生成相应的轮廓路径，可用于文字描边以及高级颜色填充，不适合频繁调用，因此只适用于确定的文本。
+//factory必须指定为与渲染目标使用相同的对象。
+//【注意】该函数不支持换行符。
+HRESULT CreateD2DGeometryFromText(Microsoft::WRL::ComPtr<ID2D1PathGeometry> &geometry, ID2D1Factory *factory,
+	IDWriteFontFace *pfontface, float fontSize, const wchar_t *text, size_t textlength);
+//创建一个仅一次变化的渐变笔刷。
+//【注意】该函数中的坐标以所绘图形的左下角为原点，向右为X轴正方向，向上为Y轴正方向。
+HRESULT CreateD2DLinearGradientBrush(Microsoft::WRL::ComPtr<ID2D1LinearGradientBrush> &lgBrush, ID2D1RenderTarget *rt,
+	float startX, float startY, float endX, float endY, D2D1_COLOR_F startColor, D2D1_COLOR_F endColor);
+//绘制带有轮廓的路径，必须在BeginDraw和EndDraw之间调用。完成后渲染目标的位置将移至原点。
+//【注意】该函数中的坐标以所绘图形的左下角为原点，向右为X轴正方向，向上为Y轴正方向。
+void D2DDrawGeometryWithOutline(ID2D1RenderTarget *rt, ID2D1Geometry *geometry, float x, float y,
+	ID2D1Brush *fillBrush, ID2D1Brush *outlineBrush, float outlineWidth);
