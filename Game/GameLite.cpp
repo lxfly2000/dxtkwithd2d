@@ -160,7 +160,7 @@ void GameLite::OnUpdateResProp(int _w, int _h, IDXGISwapChain *pswchain)
 {
 	screenSize.right = _w;
 	screenSize.bottom = _h;
-	textpos.x = screenSize.right / 2.0f;
+	textpos.x = (float)(screenSize.right / 2);//不要有小数，否则绘制出的文字会变得模糊。
 	textpos.y = (float)screenSize.bottom;
 	matProjection = DirectX::SimpleMath::Matrix::CreatePerspectiveFieldOfView(DirectX::XM_PI / 4.0f,
 		(float)GetScreenWidth() / GetScreenHeight(), 0.1f, 10.0f);
