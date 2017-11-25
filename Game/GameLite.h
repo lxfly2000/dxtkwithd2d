@@ -60,11 +60,16 @@ private:
 	ID2D1RenderTarget *d2drendertarget;//D2D绘图目标，因D2D绘图比较简单故不再封装
 	ID2D1SolidColorBrush *circleBrush, *outlineBrush;//不同颜色的笔刷资源
 	D2D1_ELLIPSE circle;//圆形对象
+	Microsoft::WRL::ComPtr<ID2D1PathGeometry> hpcircle;//HP对象
 	Microsoft::WRL::ComPtr<IDWriteTextFormat> textformat;//DWrite排版系统的字体
 	TCHAR cursorposText[10];//显示指针坐标的文字
 
 	Microsoft::WRL::ComPtr<IDWriteFontFace> fontface;//DWrite字体Face
 	Microsoft::WRL::ComPtr<ID2D1PathGeometry> btgeometry;//文字轮廓路径
 	Microsoft::WRL::ComPtr<ID2D1LinearGradientBrush> bluetowhiteBrush;//蓝到白色渐变的笔刷
+	//percent: 0.0f～1.0f
+	HRESULT CreateHPCircle(Microsoft::WRL::ComPtr<ID2D1PathGeometry> &_circle, float r, float percent);
+	void DrawHPCircle(ID2D1PathGeometry *_circle, float x, float y, float w, float bw,
+		ID2D1Brush *inner, ID2D1Brush *border);
 };
 

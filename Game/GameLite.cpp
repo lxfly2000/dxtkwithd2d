@@ -44,6 +44,7 @@ void GameLite::Init(ID3D11Device *pdevice, ID3D11DeviceContext *pcontext, ID2D1F
 	textformat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
 	//textformat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 	circle.radiusX = circle.radiusY = 120.0f;
+	Update();
 }
 
 void GameLite::Uninit()
@@ -77,6 +78,7 @@ void GameLite::UninitD2D()
 void GameLite::Update()
 {
 	matWorld = DirectX::SimpleMath::Matrix::CreateRotationY(0.005f*fcounter*DirectX::XM_PI);
+	CreateHPCircle(hpcircle, circle.radiusX, 1.0f - (fcounter % 200) / 200.0f);
 	auto key = keyboard->GetState();
 	if (key.Up)
 	{
@@ -127,8 +129,7 @@ void GameLite::Draw()
 	//D2D画图操作
 	d2drendertarget->BeginDraw();
 	//Clear操作已由DXTK完成故不再需要调用ID2D1RenderTarget::Clear
-	d2drendertarget->DrawEllipse(circle, outlineBrush, 8.0f);
-	d2drendertarget->DrawEllipse(circle, circleBrush, 4.0f);
+	DrawHPCircle(hpcircle.Get(), circle.point.x, circle.point.y, 6.0f, 2.0f, circleBrush, outlineBrush);
 	//D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT：绘制彩色文字，要求系统为Win8.1/10，在Win7中会使D2D区域无法显示
 	//D2D1_DRAW_TEXT_OPTIONS_NONE：不使用高级绘制选项
 	d2drendertarget->DrawText(cursorposText, lstrlen(cursorposText), textformat.Get(),
@@ -171,6 +172,20 @@ void GameLite::OnUpdateResProp(int _w, int _h, IDXGISwapChain *pswchain)
 void GameLite::OnBeforeResizeWindow()
 {
 	UninitD2D();
+}
+
+HRESULT GameLite::CreateHPCircle(Microsoft::WRL::ComPtr<ID2D1PathGeometry>& _circle, float r, float percent)
+{
+	circle.radiusX = circle.radiusY = r;
+	return CreateD2DArc(_circle, d2ddevice, r, 630.0f - 360.0f*percent, 630.0f);
+}
+
+void GameLite::DrawHPCircle(ID2D1PathGeometry * _circle, float x, float y, float w, float bw,
+	ID2D1Brush * ic, ID2D1Brush * bc)
+{
+	D2DDrawPath(d2drendertarget, _circle, x, y, ic, w);
+	d2drendertarget->DrawEllipse(D2D1::Ellipse(circle.point, circle.radiusX + w / 2, circle.radiusY + w / 2), bc, bw);
+	d2drendertarget->DrawEllipse(D2D1::Ellipse(circle.point, circle.radiusX - w / 2, circle.radiusY - w / 2), bc, bw);
 }
 
 int GameLite::GetScreenWidth()

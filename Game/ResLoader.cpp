@@ -401,7 +401,7 @@ HRESULT CreateDWTextFormat(ComPtr<IDWriteTextFormat> &textformat,
 	return S_OK;
 }
 
-HRESULT CreateDWFontFace(Microsoft::WRL::ComPtr<IDWriteFontFace>& fontface, LPCWSTR fontName,
+HRESULT CreateDWFontFace(ComPtr<IDWriteFontFace>& fontface, LPCWSTR fontName,
 	DWRITE_FONT_WEIGHT fontWeight, DWRITE_FONT_STYLE fontStyle, DWRITE_FONT_STRETCH fontExpand)
 {
 	ComPtr<IDWriteFactory> dwfactory;
@@ -421,7 +421,7 @@ HRESULT CreateDWFontFace(Microsoft::WRL::ComPtr<IDWriteFontFace>& fontface, LPCW
 	return S_OK;
 }
 
-HRESULT CreateDWFontFace(Microsoft::WRL::ComPtr<IDWriteFontFace>& fontface, IDWriteTextFormat * textformat)
+HRESULT CreateDWFontFace(ComPtr<IDWriteFontFace>& fontface, IDWriteTextFormat * textformat)
 {
 	TCHAR fontName[256];
 	C(textformat->GetFontFamilyName(fontName, ARRAYSIZE(fontName)));
@@ -436,7 +436,7 @@ constexpr float PointToDip(float pointsize)
 	return pointsize*96.0f / 72.0f;
 }
 
-HRESULT CreateD2DGeometryFromText(Microsoft::WRL::ComPtr<ID2D1PathGeometry>& geometry, ID2D1Factory *factory,
+HRESULT CreateD2DGeometryFromText(ComPtr<ID2D1PathGeometry>& geometry, ID2D1Factory *factory,
 	IDWriteFontFace* pfontface, float fontSize, const wchar_t * text, size_t textlength)
 {
 	std::vector<UINT32> unicode_ui32;
@@ -454,7 +454,7 @@ HRESULT CreateD2DGeometryFromText(Microsoft::WRL::ComPtr<ID2D1PathGeometry>& geo
 	return S_OK;
 }
 
-HRESULT CreateD2DLinearGradientBrush(Microsoft::WRL::ComPtr<ID2D1LinearGradientBrush>& lgBrush, ID2D1RenderTarget * rt,
+HRESULT CreateD2DLinearGradientBrush(ComPtr<ID2D1LinearGradientBrush>& lgBrush, ID2D1RenderTarget * rt,
 	float startX, float startY, float endX, float endY, D2D1_COLOR_F startColor, D2D1_COLOR_F endColor)
 {
 	//https://msdn.microsoft.com/zh-cn/library/dd756678(v=vs.85).aspx
@@ -472,5 +472,27 @@ void D2DDrawGeometryWithOutline(ID2D1RenderTarget * rt, ID2D1Geometry * geometry
 	rt->SetTransform(D2D1::Matrix3x2F::Translation(x, y));
 	rt->FillGeometry(geometry, fillBrush);
 	rt->DrawGeometry(geometry, outlineBrush, outlineWidth);
+	rt->SetTransform(D2D1::IdentityMatrix());
+}
+
+HRESULT CreateD2DArc(ComPtr<ID2D1PathGeometry> &arc, ID2D1Factory *factory, float r, float startDegree, float endDegree)
+{
+	ComPtr<ID2D1GeometrySink> sink;
+	C(factory->CreatePathGeometry(arc.ReleaseAndGetAddressOf()));
+	C(arc->Open(sink.ReleaseAndGetAddressOf()));
+	sink->BeginFigure(D2D1::Point2F(r*cosf(DirectX::XMConvertToRadians(startDegree)),
+		r*sinf(DirectX::XMConvertToRadians(startDegree))), D2D1_FIGURE_BEGIN_HOLLOW);
+	sink->AddArc(D2D1::ArcSegment(D2D1::Point2F(r*cosf(DirectX::XMConvertToRadians(endDegree)),
+		r*sinf(DirectX::XMConvertToRadians(endDegree))), D2D1::SizeF(r, r), 0, D2D1_SWEEP_DIRECTION_CLOCKWISE,
+		endDegree - startDegree > 180.0f ? D2D1_ARC_SIZE_LARGE : D2D1_ARC_SIZE_SMALL));
+	sink->EndFigure(D2D1_FIGURE_END_OPEN);
+	C(sink->Close());
+	return S_OK;
+}
+
+void D2DDrawPath(ID2D1RenderTarget *rt, ID2D1PathGeometry *path, float x, float y, ID2D1Brush *color, float width)
+{
+	rt->SetTransform(D2D1::Matrix3x2F::Translation(x, y));
+	rt->DrawGeometry(path, color, width);
 	rt->SetTransform(D2D1::IdentityMatrix());
 }

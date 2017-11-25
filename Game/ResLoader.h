@@ -69,6 +69,11 @@ HRESULT CreateD2DGeometryFromText(Microsoft::WRL::ComPtr<ID2D1PathGeometry> &geo
 HRESULT CreateD2DLinearGradientBrush(Microsoft::WRL::ComPtr<ID2D1LinearGradientBrush> &lgBrush, ID2D1RenderTarget *rt,
 	float startX, float startY, float endX, float endY, D2D1_COLOR_F startColor, D2D1_COLOR_F endColor);
 //绘制带有轮廓的路径，必须在BeginDraw和EndDraw之间调用。完成后渲染目标的位置将移至原点。
-//【注意】该函数中的坐标以所绘图形的左下角为原点，向右为X轴正方向，向上为Y轴正方向。
 void D2DDrawGeometryWithOutline(ID2D1RenderTarget *rt, ID2D1Geometry *geometry, float x, float y,
 	ID2D1Brush *fillBrush, ID2D1Brush *outlineBrush, float outlineWidth);
+//创建一个圆弧，使用角度制，水平向右为0度，顺时针为正方向。
+//endDegree必须大于startDegree；factory必须指定为与渲染目标使用相同的对象。
+HRESULT CreateD2DArc(Microsoft::WRL::ComPtr<ID2D1PathGeometry> &arc, ID2D1Factory *factory, float r,
+	float startDegree, float endDegree);
+//绘制非封闭的路径，必须在BeginDraw和EndDraw之间调用。完成后渲染目标的位置将移至原点。
+void D2DDrawPath(ID2D1RenderTarget *rt, ID2D1PathGeometry *path, float x, float y, ID2D1Brush *color, float width);
