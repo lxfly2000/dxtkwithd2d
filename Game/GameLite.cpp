@@ -19,14 +19,13 @@ void GameLite::Init(ID3D11Device *pdevice, ID3D11DeviceContext *pcontext, ID2D1F
 {
 	d3ddevice = pdevice;
 	d2ddevice = pd2ddevice;
-	resourceLoader.Init(pdevice);
 	spriteBatch = std::make_unique<DirectX::SpriteBatch>(pcontext);
-	resourceLoader.LoadTextureFromFile(L"C:\\Program Files\\Windows Media Player\\Media Renderer\\DMR_120.png",
+	LoadTextureFromFile(d3ddevice,L"C:\\Program Files\\Windows Media Player\\Media Renderer\\DMR_120.png",
 		&pic, (int*)&picToScrRect.right, (int*)&picToScrRect.bottom);
 	keyboard = std::make_unique<DirectX::Keyboard>();
 	mouse = std::make_unique<DirectX::Mouse>();
 	mouse->SetWindow(hwnd);
-	resourceLoader.LoadFontFromSystem(ssfont, 1024, 1024, L"ËÎÌו", 48, D2D1::ColorF(D2D1::ColorF::White),
+	LoadFontFromSystem(d3ddevice,ssfont, 1024, 1024, L"ËÎÌו", 48, D2D1::ColorF(D2D1::ColorF::White),
 		DWRITE_FONT_WEIGHT_REGULAR);
 	wsprintf(picpostext, PICPOS_FORMAT, picToScrRect.left, picToScrRect.top);
 	textcenterpos = ssfont->MeasureString(picpostext);
@@ -36,7 +35,7 @@ void GameLite::Init(ID3D11Device *pdevice, ID3D11DeviceContext *pcontext, ID2D1F
 	matView = DirectX::SimpleMath::Matrix::CreateLookAt(DirectX::SimpleMath::Vector3(0, 2.0f, -2.5f),
 		DirectX::SimpleMath::Vector3::Zero, DirectX::SimpleMath::Vector3::UnitY);
 	fcounter = 0;
-	pressing_p = false;
+	lastStateP = false;
 
 	CreateDWTextFormat(textformat, L"ËÎÌו", DWRITE_FONT_WEIGHT_NORMAL, 48.0f);
 	CreateDWFontFace(fontface, textformat.Get());
@@ -44,14 +43,12 @@ void GameLite::Init(ID3D11Device *pdevice, ID3D11DeviceContext *pcontext, ID2D1F
 	textformat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
 	//textformat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 	circle.radiusX = circle.radiusY = 120.0f;
-	Update();
 }
 
 void GameLite::Uninit()
 {
 	UninitD2D();
 	pic->Release();
-	resourceLoader.Uninit();
 }
 
 void GameLite::InitD2D(IDXGISwapChain *pswchain)
@@ -75,8 +72,10 @@ void GameLite::UninitD2D()
 	d2drendertarget->Release();
 }
 
-void GameLite::Update()
+void GameLite::Update(float elapsedTime)
 {
+	if (isPausedFromSystem)
+		return;
 	matWorld = DirectX::SimpleMath::Matrix::CreateRotationY(0.005f*fcounter*DirectX::XM_PI);
 	CreateHPCircle(hpcircle, circle.radiusX, 1.0f - (fcounter % 200) / 200.0f);
 	auto key = keyboard->GetState();
@@ -104,11 +103,6 @@ void GameLite::Update()
 		picToScrRect.right += 1;
 		wsprintf(picpostext, PICPOS_FORMAT, picToScrRect.left, picToScrRect.top);
 	}
-	if (pressing_p && !key.P)
-	{
-		resourceLoader.TakeScreenShotToFile(L"shot.png");
-	}
-	pressing_p = key.P;
 	
 	auto mousepos = mouse->GetState();
 	circle.point.x = static_cast<float>(mousepos.x);
@@ -138,9 +132,6 @@ void GameLite::Draw()
 	D2DDrawGeometryWithOutline(d2drendertarget, btgeometry.Get(), 0, (float)screenSize.bottom,
 		bluetowhiteBrush.Get(), outlineBrush, 1);
 	d2drendertarget->EndDraw();
-
-	if (!isPausedFromSystem)
-		Update();
 }
 
 void GameLite::PauseFromSystem()
@@ -165,7 +156,6 @@ void GameLite::OnUpdateResProp(int _w, int _h, IDXGISwapChain *pswchain)
 	textpos.y = (float)screenSize.bottom;
 	matProjection = DirectX::SimpleMath::Matrix::CreatePerspectiveFieldOfView(DirectX::XM_PI / 4.0f,
 		(float)GetScreenWidth() / GetScreenHeight(), 0.1f, 10.0f);
-	resourceLoader.SetSwapChain(pswchain);
 	InitD2D(pswchain);
 }
 
@@ -196,5 +186,13 @@ int GameLite::GetScreenWidth()
 int GameLite::GetScreenHeight()
 {
 	return screenSize.bottom - screenSize.top;
+}
+
+void GameLite::OnBeforePresent(IDXGISwapChain*swapChain)
+{
+	bool stateP = keyboard->GetState().P;
+	if (lastStateP && !stateP)
+		TakeScreenShotToFile(d3ddevice,swapChain,L"shot.png");
+	lastStateP = stateP;
 }
 

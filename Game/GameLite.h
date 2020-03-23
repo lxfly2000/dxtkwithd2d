@@ -18,7 +18,7 @@ public:
 	//DXGI依赖资源，当DXGI资源更新前需要先释放D2D。
 	virtual void UninitD2D();
 	//更新程序中各种数据（程序循环）
-	virtual void Update();
+	virtual void Update(float elapsedTime);
 	//画图（每帧）
 	virtual void Draw();
 	//系统暂停
@@ -29,6 +29,8 @@ public:
 	int GetScreenWidth();
 	//获取游戏区屏幕高度
 	int GetScreenHeight();
+	//Present前的操作
+	virtual void OnBeforePresent(IDXGISwapChain*swapChain);
 
 	//系统更新资源属性，参数为窗口的新尺寸
 	virtual void OnUpdateResProp(int _w, int _h, IDXGISwapChain *pswchain);
@@ -38,7 +40,6 @@ private:
 	//这放资源
 	RECT screenSize;//存放屏幕尺寸
 	bool isPausedFromSystem;//是否因最小化等原因而使程序暂停运行了
-	ResLoader resourceLoader;//资源加载器
 	ID3D11Device *d3ddevice;//D3D设备指针，仅保存，无须释放
 	std::unique_ptr<DirectX::SpriteBatch> spriteBatch;//DXTK的精灵处理对象
 
@@ -54,7 +55,7 @@ private:
 	std::unique_ptr<DirectX::GeometricPrimitive> mdBlock;//正方体物体对象
 	int fcounter;//帧计数器
 
-	bool pressing_p;//是否按下了P键
+	bool lastStateP;//是否按下了P键
 
 	ID2D1Factory *d2ddevice;//D2D设备指针，仅保存，无须释放
 	ID2D1RenderTarget *d2drendertarget;//D2D绘图目标，因D2D绘图比较简单故不再封装

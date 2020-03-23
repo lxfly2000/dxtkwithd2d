@@ -60,7 +60,7 @@ void Game::Update(DX::StepTimer const& timer)
     float elapsedTime = float(timer.GetElapsedSeconds());
 
     // TODO: Add your game logic here.
-    elapsedTime;
+    mygame.Update(elapsedTime);
 }
 
 // Draws the scene.
@@ -97,6 +97,7 @@ void Game::Clear()
 // Presents the back buffer contents to the screen.
 void Game::Present()
 {
+    mygame.OnBeforePresent(m_swapChain.Get());
     // The first argument instructs DXGI to block until VSync, putting the application
     // to sleep until the next VSync. This ensures we don't waste any cycles rendering
     // frames that will never be displayed to the screen.
@@ -148,8 +149,6 @@ void Game::OnWindowSizeChanged(int width, int height)
     m_outputHeight = std::max(height, 1);
 
     CreateResources();
-
-    //TODO: 窗口大小变化
 }
 
 // Properties

@@ -19,24 +19,7 @@ HRESULT _debug_hr = S_OK;
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;
 
-ResLoader::ResLoader()
-{
-	Uninit();
-}
-
-
-void ResLoader::Init(ID3D11Device *pdevice)
-{
-	m_pd3dDevice = pdevice;
-}
-
-void ResLoader::Uninit()
-{
-	m_pd3dDevice = nullptr;
-}
-
-HRESULT ResLoader::LoadTextureFromFile(LPWSTR fpath, ID3D11ShaderResourceView **pTex, int *pw, int *ph,
-	bool convertpmalpha)
+HRESULT LoadTextureFromFile(ID3D11Device*device,LPWSTR fpath, ID3D11ShaderResourceView **pTex, int *pw, int *ph, bool convertpmalpha)
 {
 	ComPtr<ID3D11Resource> tmpRes;
 	if (convertpmalpha)
@@ -47,12 +30,12 @@ HRESULT ResLoader::LoadTextureFromFile(LPWSTR fpath, ID3D11ShaderResourceView **
 		C(PremultiplyAlpha(image.GetImages(), image.GetImageCount(), image.GetMetadata(), NULL, pmaimage));
 		C(SaveToWICMemory(pmaimage.GetImages(), pmaimage.GetImageCount(), WIC_FLAGS_NONE, GUID_ContainerFormatPng,
 			pmaimageres));
-		C(CreateWICTextureFromMemory(m_pd3dDevice, (BYTE*)pmaimageres.GetBufferPointer(), pmaimageres.GetBufferSize(),
+		C(CreateWICTextureFromMemory(device, (BYTE*)pmaimageres.GetBufferPointer(), pmaimageres.GetBufferSize(),
 			&tmpRes, pTex));
 	}
 	else
 	{
-		C(CreateWICTextureFromFile(m_pd3dDevice, fpath, &tmpRes, pTex));
+		C(CreateWICTextureFromFile(device, fpath, &tmpRes, pTex));
 	}
 	ComPtr<ID3D11Texture2D> tmpTex2D;
 	C(tmpRes.As(&tmpTex2D));
@@ -199,7 +182,7 @@ HRESULT WicBitmapConvertPremultiplyAlpha(IWICBitmap *wicbitmap, ComPtr<IWICBitma
 }
 
 //COM函数
-HRESULT ResLoader::LoadFontFromSystem(std::unique_ptr<SpriteFont> &outSF, unsigned textureWidth, unsigned textureHeight,
+HRESULT LoadFontFromSystem(ID3D11Device*device,std::unique_ptr<SpriteFont> &outSF, unsigned textureWidth, unsigned textureHeight,
 	LPWSTR fontName, float fontSize, const D2D1_COLOR_F &fontColor, DWRITE_FONT_WEIGHT fontWeight,
 	wchar_t *pszCharacters, float pxBetweenChar, bool convertpmalpha)
 {
@@ -329,12 +312,12 @@ HRESULT ResLoader::LoadFontFromSystem(std::unique_ptr<SpriteFont> &outSF, unsign
 		C(PremultiplyAlpha(teximage.GetImages(), teximage.GetImageCount(), teximage.GetMetadata(), NULL, pmteximage));
 		C(SaveToWICMemory(pmteximage.GetImages(), pmteximage.GetImageCount(), WIC_FLAGS_NONE, GUID_ContainerFormatPng,
 			pmteximageres));
-		C(CreateWICTextureFromMemory(m_pd3dDevice, (BYTE*)pmteximageres.GetBufferPointer(),
+		C(CreateWICTextureFromMemory(device, (BYTE*)pmteximageres.GetBufferPointer(),
 			pmteximageres.GetBufferSize(), &fontTexture, &fontTextureView));
 	}
 	else
 	{
-		C(CreateWICTextureFromMemory(m_pd3dDevice, membitmap.get(), memsize, &fontTexture, &fontTextureView));
+		C(CreateWICTextureFromMemory(device, membitmap.get(), memsize, &fontTexture, &fontTextureView));
 	}
 	//创建SpriteFont
 	outSF.reset(new SpriteFont(fontTextureView, glyphs.data(), glyphs.size(), chHeight));
@@ -352,19 +335,14 @@ HRESULT ResLoader::LoadFontFromSystem(std::unique_ptr<SpriteFont> &outSF, unsign
 	return S_OK;
 }
 
-HRESULT ResLoader::TakeScreenShotToFile(LPWSTR fpath)
+HRESULT TakeScreenShotToFile(ID3D11Device*device,IDXGISwapChain* swapChain,LPWSTR fpath)
 {
 	//https://github.com/Microsoft/DirectXTK/wiki/ScreenGrab#examples
 	ComPtr<ID3D11DeviceContext> ctx;
-	m_pd3dDevice->GetImmediateContext(&ctx);
+	device->GetImmediateContext(&ctx);
 	ComPtr<ID3D11Texture2D> texscreen;
-	C(m_pSwapChain->GetBuffer(0, __uuidof(texscreen), (void**)texscreen.GetAddressOf()));
+	C(swapChain->GetBuffer(0, __uuidof(texscreen), (void**)texscreen.GetAddressOf()));
 	return SaveWICTextureToFile(ctx.Get(), texscreen.Get(), GUID_ContainerFormatPng, fpath);
-}
-
-void ResLoader::SetSwapChain(IDXGISwapChain *pswchain)
-{
-	m_pSwapChain = pswchain;
 }
 
 //COM函数
