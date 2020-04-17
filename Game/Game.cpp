@@ -143,12 +143,12 @@ void Game::OnResuming()
 
 void Game::OnWindowSizeChanged(int width, int height)
 {
-	mygame.OnBeforeResizeWindow();
+	/*mygame.OnBeforeResizeWindow();
 
     m_outputWidth = std::max(width, 1);
     m_outputHeight = std::max(height, 1);
 
-    CreateResources();
+    CreateResources();*/
 }
 
 // Properties

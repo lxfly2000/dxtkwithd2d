@@ -190,7 +190,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
                 game->OnDeactivated();
             }
         }
-		Mouse::ProcessMessage(message, wParam, lParam);
+		//Mouse::ProcessMessage(message, wParam, lParam);
         break;
 
     case WM_POWERBROADCAST:
@@ -220,27 +220,22 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_SYSKEYDOWN:
         if (wParam == VK_RETURN && (lParam & 0x60000000) == 0x20000000)
         {
+            static WINDOWINFO wi;
+            static WINDOWPLACEMENT wp;
             // Implements the classic ALT+ENTER fullscreen toggle
             if (s_fullscreen)
             {
-                SetWindowLongPtr(hWnd, GWL_STYLE, WS_OVERLAPPEDWINDOW);
-                SetWindowLongPtr(hWnd, GWL_EXSTYLE, 0);
+                SetWindowLongPtr(hWnd, GWL_STYLE, wi.dwStyle);
+                SetWindowLongPtr(hWnd, GWL_EXSTYLE, wi.dwExStyle);
 
-                int width = 800;
-                int height = 600;
-                if (game)
-                    game->GetDefaultSize(width, height);
-
-                ShowWindow(hWnd, SW_SHOWNORMAL);
-
-                SetWindowPos(hWnd, HWND_TOP, 0, 0, width, height, SWP_NOMOVE | SWP_NOZORDER | SWP_FRAMECHANGED);
+                SetWindowPlacement(hWnd,&wp);
             }
             else
             {
+                GetWindowInfo(hWnd, &wi);
+                GetWindowPlacement(hWnd, &wp);
                 SetWindowLongPtr(hWnd, GWL_STYLE, 0);
                 SetWindowLongPtr(hWnd, GWL_EXSTYLE, WS_EX_TOPMOST);
-
-                SetWindowPos(hWnd, HWND_TOP, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 
                 ShowWindow(hWnd, SW_SHOWMAXIMIZED);
             }
@@ -254,7 +249,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		Keyboard::ProcessMessage(message, wParam, lParam);
         break;
 
-	case WM_INPUT:
+	/*case WM_INPUT:
 	case WM_MOUSEMOVE:
 	case WM_LBUTTONDOWN:
 	case WM_LBUTTONUP:
@@ -267,7 +262,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_XBUTTONUP:
 	case WM_MOUSEHOVER:
 		Mouse::ProcessMessage(message, wParam, lParam);
-		break;
+		break;*/
 
 	case WM_MENUCHAR:
         // A menu is active and the user presses a key that does not correspond

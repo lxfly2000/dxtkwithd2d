@@ -46,7 +46,7 @@ private:
 	ID3D11ShaderResourceView *pic;//游戏类中有一个材质图
 	RECT picToScrRect;//存放图片位置与尺寸
 	std::unique_ptr<DirectX::Keyboard> keyboard;//键盘对象
-	std::unique_ptr<DirectX::Mouse> mouse;//鼠标对象
+	//std::unique_ptr<DirectX::Mouse> mouse;//鼠标对象
 	std::unique_ptr<DirectX::SpriteFont> ssfont;//加载到的DXTK字体表
 	TCHAR picpostext[20];//显示图片坐标的文字
 	DirectX::SimpleMath::Vector2 textpos, textcenterpos;//显示图片坐标的文字位置
@@ -63,7 +63,7 @@ private:
 	D2D1_ELLIPSE circle;//圆形对象
 	Microsoft::WRL::ComPtr<ID2D1PathGeometry> hpcircle;//HP对象
 	Microsoft::WRL::ComPtr<IDWriteTextFormat> textformat;//DWrite排版系统的字体
-	TCHAR cursorposText[10];//显示指针坐标的文字
+	//TCHAR cursorposText[10];//显示指针坐标的文字
 
 	Microsoft::WRL::ComPtr<IDWriteFontFace> fontface;//DWrite字体Face
 	Microsoft::WRL::ComPtr<ID2D1PathGeometry> btgeometry;//文字轮廓路径
