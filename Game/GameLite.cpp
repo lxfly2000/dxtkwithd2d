@@ -23,8 +23,8 @@ void GameLite::Init(ID3D11Device *pdevice, ID3D11DeviceContext *pcontext, ID2D1F
 	LoadTextureFromFile(d3ddevice,L"C:\\Program Files\\Windows Media Player\\Media Renderer\\DMR_120.png",
 		&pic, (int*)&picToScrRect.right, (int*)&picToScrRect.bottom);
 	keyboard = std::make_unique<DirectX::Keyboard>();
-	/*mouse = std::make_unique<DirectX::Mouse>();
-	mouse->SetWindow(hwnd);*/
+	mouse = std::make_unique<DirectX::Mouse>();
+	mouse->SetWindow(hwnd);
 	LoadFontFromSystem(d3ddevice,ssfont, 1024, 1024, L"宋体", 48, D2D1::ColorF(D2D1::ColorF::White),
 		DWRITE_FONT_WEIGHT_REGULAR);
 	wsprintf(picpostext, PICPOS_FORMAT, picToScrRect.left, picToScrRect.top);
@@ -104,10 +104,9 @@ void GameLite::Update(float elapsedTime)
 		wsprintf(picpostext, PICPOS_FORMAT, picToScrRect.left, picToScrRect.top);
 	}
 	
-	//auto mousepos = mouse->GetState();
-	circle.point.x = picToScrRect.left+(picToScrRect.right-picToScrRect.left)/2.0f;
-	circle.point.y = picToScrRect.top+(picToScrRect.bottom-picToScrRect.top)/2.0f;
-	//wsprintf(cursorposText, PICPOS_FORMAT, mousepos.x, mousepos.y);
+	circle.point.x = MapMousePointToScreenX(mouse.get());
+	circle.point.y = MapMousePointToScreenY(mouse.get());
+	wsprintf(cursorposText, PICPOS_FORMAT, (int)circle.point.x, (int)circle.point.y);
 
 	fcounter++;
 }
@@ -126,7 +125,7 @@ void GameLite::Draw()
 	DrawHPCircle(hpcircle.Get(), circle.point.x, circle.point.y, 6.0f, 2.0f, circleBrush, outlineBrush);
 	//D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT：绘制彩色文字，要求系统为Win8.1/10，在Win7中会使D2D区域无法显示
 	//D2D1_DRAW_TEXT_OPTIONS_NONE：不使用高级绘制选项
-	d2drendertarget->DrawText(picpostext, lstrlen(picpostext), textformat.Get(),
+	d2drendertarget->DrawText(cursorposText, lstrlen(cursorposText), textformat.Get(),
 		D2D1::RectF((float)screenSize.left, (float)screenSize.top, (float)screenSize.right,
 		(float)screenSize.bottom), circleBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT);
 	D2DDrawGeometryWithOutline(d2drendertarget, btgeometry.Get(), 0, (float)screenSize.bottom,
@@ -164,6 +163,24 @@ void GameLite::OnBeforeResizeWindow()
 	UninitD2D();
 }
 
+void GameLite::OnNewHWNDWindowSize(int _w, int _h)
+{
+	hwndWindowSize.left = 0;
+	hwndWindowSize.top = 0;
+	hwndWindowSize.right = _w;
+	hwndWindowSize.bottom = _h;
+}
+
+int GameLite::MapMousePointToScreenX(DirectX::Mouse* p)
+{
+	return p->GetState().x * GetScreenWidth() / GetHWNDWindowWidth();
+}
+
+int GameLite::MapMousePointToScreenY(DirectX::Mouse* p)
+{
+	return p->GetState().y * GetScreenHeight() / GetHWNDWindowHeight();
+}
+
 HRESULT GameLite::CreateHPCircle(Microsoft::WRL::ComPtr<ID2D1PathGeometry>& _circle, float r, float percent)
 {
 	circle.radiusX = circle.radiusY = r;
@@ -186,6 +203,16 @@ int GameLite::GetScreenWidth()
 int GameLite::GetScreenHeight()
 {
 	return screenSize.bottom - screenSize.top;
+}
+
+int GameLite::GetHWNDWindowWidth()
+{
+	return hwndWindowSize.right-hwndWindowSize.left;
+}
+
+int GameLite::GetHWNDWindowHeight()
+{
+	return hwndWindowSize.bottom - hwndWindowSize.top;
 }
 
 void GameLite::OnBeforePresent(IDXGISwapChain*swapChain)

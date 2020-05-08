@@ -36,6 +36,7 @@ void Game::Initialize(HWND window, int width, int height)
     m_timer.SetFixedTimeStep(true);
     m_timer.SetTargetElapsedSeconds(1.0 / 60);
     */
+    mygame.OnNewHWNDWindowSize(m_outputWidth, m_outputHeight);
 }
 
 void Game::Uninitialize()
@@ -149,6 +150,7 @@ void Game::OnWindowSizeChanged(int width, int height)
     m_outputHeight = std::max(height, 1);
 
     CreateResources();*/
+    mygame.OnNewHWNDWindowSize(width, height);
 }
 
 // Properties

@@ -29,6 +29,10 @@ public:
 	int GetScreenWidth();
 	//获取游戏区屏幕高度
 	int GetScreenHeight();
+	//获取窗口屏幕宽度
+	int GetHWNDWindowWidth();
+	//获取窗口屏幕高度
+	int GetHWNDWindowHeight();
 	//Present前的操作
 	virtual void OnBeforePresent(IDXGISwapChain*swapChain);
 
@@ -36,9 +40,13 @@ public:
 	virtual void OnUpdateResProp(int _w, int _h, IDXGISwapChain *pswchain);
 	//窗口被调整前的操作，因为窗口调整需要重建资源，故这里需要放释放资源的操作
 	virtual void OnBeforeResizeWindow();
+	virtual void OnNewHWNDWindowSize(int _w, int _h);
 private:
+	int MapMousePointToScreenX(DirectX::Mouse* p);
+	int MapMousePointToScreenY(DirectX::Mouse* p);
 	//这放资源
 	RECT screenSize;//存放屏幕尺寸
+	RECT hwndWindowSize;
 	bool isPausedFromSystem;//是否因最小化等原因而使程序暂停运行了
 	ID3D11Device *d3ddevice;//D3D设备指针，仅保存，无须释放
 	std::unique_ptr<DirectX::SpriteBatch> spriteBatch;//DXTK的精灵处理对象
@@ -46,7 +54,7 @@ private:
 	ID3D11ShaderResourceView *pic;//游戏类中有一个材质图
 	RECT picToScrRect;//存放图片位置与尺寸
 	std::unique_ptr<DirectX::Keyboard> keyboard;//键盘对象
-	//std::unique_ptr<DirectX::Mouse> mouse;//鼠标对象
+	std::unique_ptr<DirectX::Mouse> mouse;//鼠标对象
 	std::unique_ptr<DirectX::SpriteFont> ssfont;//加载到的DXTK字体表
 	TCHAR picpostext[20];//显示图片坐标的文字
 	DirectX::SimpleMath::Vector2 textpos, textcenterpos;//显示图片坐标的文字位置
@@ -63,7 +71,7 @@ private:
 	D2D1_ELLIPSE circle;//圆形对象
 	Microsoft::WRL::ComPtr<ID2D1PathGeometry> hpcircle;//HP对象
 	Microsoft::WRL::ComPtr<IDWriteTextFormat> textformat;//DWrite排版系统的字体
-	//TCHAR cursorposText[10];//显示指针坐标的文字
+	TCHAR cursorposText[10];//显示指针坐标的文字
 
 	Microsoft::WRL::ComPtr<IDWriteFontFace> fontface;//DWrite字体Face
 	Microsoft::WRL::ComPtr<ID2D1PathGeometry> btgeometry;//文字轮廓路径
