@@ -17,6 +17,7 @@ GameLite::GameLite()
 
 void GameLite::Init(ID3D11Device *pdevice, ID3D11DeviceContext *pcontext, ID2D1Factory *pd2ddevice, HWND hwnd)
 {
+	hwndWindow = hwnd;
 	d3ddevice = pdevice;
 	d2ddevice = pd2ddevice;
 	spriteBatch = std::make_unique<DirectX::SpriteBatch>(pcontext);
@@ -35,7 +36,6 @@ void GameLite::Init(ID3D11Device *pdevice, ID3D11DeviceContext *pcontext, ID2D1F
 	matView = DirectX::SimpleMath::Matrix::CreateLookAt(DirectX::SimpleMath::Vector3(0, 2.0f, -2.5f),
 		DirectX::SimpleMath::Vector3::Zero, DirectX::SimpleMath::Vector3::UnitY);
 	fcounter = 0;
-	lastStateP = false;
 
 	CreateDWTextFormat(textformat, L"ËÎÌו", DWRITE_FONT_WEIGHT_NORMAL, 48.0f);
 	CreateDWFontFace(fontface, textformat.Get());
@@ -102,6 +102,10 @@ void GameLite::Update(float elapsedTime)
 		picToScrRect.left += 1;
 		picToScrRect.right += 1;
 		wsprintf(picpostext, PICPOS_FORMAT, picToScrRect.left, picToScrRect.top);
+	}
+	if (km.IsOnKeyDown(keyboard.get(), DirectX::Keyboard::R))
+	{
+		ResetHWNDWindowSize();
 	}
 	
 	circle.point.x = MapMousePointToScreenX(mouse.get());
@@ -171,14 +175,24 @@ void GameLite::OnNewHWNDWindowSize(int _w, int _h)
 	hwndWindowSize.bottom = _h;
 }
 
-int GameLite::MapMousePointToScreenX(DirectX::Mouse* p)
+int GameLite::MapMousePointToScreenX(const DirectX::Mouse* p)
 {
 	return p->GetState().x * GetScreenWidth() / GetHWNDWindowWidth();
 }
 
-int GameLite::MapMousePointToScreenY(DirectX::Mouse* p)
+int GameLite::MapMousePointToScreenY(const DirectX::Mouse* p)
 {
 	return p->GetState().y * GetScreenHeight() / GetHWNDWindowHeight();
+}
+
+void GameLite::ResetHWNDWindowSize()
+{
+	RECT w{ 0,0,GetScreenWidth(), GetScreenHeight() };
+	w.right *= GetDeviceCaps(GetDC(hwndWindow),LOGPIXELSX) / USER_DEFAULT_SCREEN_DPI;
+	w.bottom *= GetDeviceCaps(GetDC(hwndWindow), LOGPIXELSY) / USER_DEFAULT_SCREEN_DPI;
+	AdjustWindowRect(&w, GetWindowLongPtr(hwndWindow, GWL_STYLE), FALSE);
+	ShowWindow(hwndWindow, SW_NORMAL);
+	SetWindowPos(hwndWindow, NULL, 0, 0, w.right - w.left, w.bottom - w.top, SWP_NOZORDER | SWP_NOMOVE);
 }
 
 HRESULT GameLite::CreateHPCircle(Microsoft::WRL::ComPtr<ID2D1PathGeometry>& _circle, float r, float percent)
@@ -217,9 +231,36 @@ int GameLite::GetHWNDWindowHeight()
 
 void GameLite::OnBeforePresent(IDXGISwapChain*swapChain)
 {
-	bool stateP = keyboard->GetState().P;
-	if (lastStateP && !stateP)
+	if (km.IsOnKeyDown(keyboard.get(),DirectX::Keyboard::P))
 		TakeScreenShotToFile(d3ddevice,swapChain,L"shot.png");
-	lastStateP = stateP;
+	km.UpdateState(keyboard.get());
 }
 
+KeyManager::KeyManager():_keyState()
+{
+}
+
+void KeyManager::UpdateState(const DirectX::Keyboard* p)
+{
+	_keyState = p->GetState();
+}
+
+bool KeyManager::IsOnKeyDown(const DirectX::Keyboard* p, DirectX::Keyboard::Keys key)
+{
+	auto s = p->GetState();
+	int bytes = key / 8;
+	int remain = key - bytes * 8;
+	bool lastKey = ((reinterpret_cast<bool*>(&_keyState)[bytes] >> remain) & 1) == 1;
+	bool nowKey = ((reinterpret_cast<bool*>(&s)[bytes] >> remain) & 1) == 1;
+	return nowKey && !lastKey;
+}
+
+bool KeyManager::IsOnKeyUp(const DirectX::Keyboard* p, DirectX::Keyboard::Keys key)
+{
+	auto s = p->GetState();
+	int bytes = key / 8;
+	int remain = key - bytes * 8;
+	bool lastKey = ((reinterpret_cast<bool*>(&_keyState)[bytes] >> remain) & 1) == 1;
+	bool nowKey = ((reinterpret_cast<bool*>(&s)[bytes] >> remain) & 1) == 1;
+	return !nowKey && lastKey;
+}

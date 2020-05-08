@@ -3,6 +3,18 @@
 #define GAME_WINDOW_HEIGHT 600
 #define GAME_WINDOW_TITLE L"Direct3D 应用程序"
 #include"ResLoader.h"
+
+class KeyManager
+{
+private:
+	DirectX::Keyboard::State _keyState;
+public:
+	KeyManager();
+	void UpdateState(const DirectX::Keyboard* p);
+	bool IsOnKeyDown(const DirectX::Keyboard* p, DirectX::Keyboard::Keys key);
+	bool IsOnKeyUp(const DirectX::Keyboard* p, DirectX::Keyboard::Keys key);
+};
+
 class GameLite
 {
 public:
@@ -41,12 +53,14 @@ public:
 	//窗口被调整前的操作，因为窗口调整需要重建资源，故这里需要放释放资源的操作
 	virtual void OnBeforeResizeWindow();
 	virtual void OnNewHWNDWindowSize(int _w, int _h);
+	int MapMousePointToScreenX(const DirectX::Mouse* p);
+	int MapMousePointToScreenY(const DirectX::Mouse* p);
+	void ResetHWNDWindowSize();
 private:
-	int MapMousePointToScreenX(DirectX::Mouse* p);
-	int MapMousePointToScreenY(DirectX::Mouse* p);
 	//这放资源
 	RECT screenSize;//存放屏幕尺寸
 	RECT hwndWindowSize;
+	HWND hwndWindow;
 	bool isPausedFromSystem;//是否因最小化等原因而使程序暂停运行了
 	ID3D11Device *d3ddevice;//D3D设备指针，仅保存，无须释放
 	std::unique_ptr<DirectX::SpriteBatch> spriteBatch;//DXTK的精灵处理对象
@@ -63,7 +77,7 @@ private:
 	std::unique_ptr<DirectX::GeometricPrimitive> mdBlock;//正方体物体对象
 	int fcounter;//帧计数器
 
-	bool lastStateP;//是否按下了P键
+	KeyManager km;
 
 	ID2D1Factory *d2ddevice;//D2D设备指针，仅保存，无须释放
 	ID2D1RenderTarget *d2drendertarget;//D2D绘图目标，因D2D绘图比较简单故不再封装
