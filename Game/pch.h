@@ -63,12 +63,12 @@
 
 namespace DX
 {
-    inline void ThrowIfFailed(HRESULT hr,LPCTSTR f)
+    inline void ThrowIfFailed(HRESULT hr,LPCTSTR file,LPCTSTR func,LPCTSTR code,int line)
     {
         if (FAILED(hr))
         {
-            TCHAR msg[256],buf[128];
-            wsprintf(msg, TEXT("%s\n%#x\n"), f, hr);
+            TCHAR msg[512],buf[256];
+            wsprintf(msg, TEXT("%s : %d :\n%s :\n%s\n%#x\n"), file, line, func, code, hr);
             FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, hr, GetUserDefaultLangID(), buf, ARRAYSIZE(buf), NULL);
             lstrcat(msg, buf);
             MessageBox(NULL, msg, NULL, MB_ICONERROR);
@@ -78,4 +78,4 @@ namespace DX
     }
 }
 
-#define DXThrowIfFailed(hr) DX::ThrowIfFailed(hr,__FUNCTIONW__)
+#define DXThrowIfFailed(hr) DX::ThrowIfFailed(hr,__FILEW__,__FUNCTIONW__,TEXT(_CRT_STRINGIZE(hr)),__LINE__)
