@@ -63,12 +63,19 @@
 
 namespace DX
 {
-    inline void ThrowIfFailed(HRESULT hr)
+    inline void ThrowIfFailed(HRESULT hr,LPCTSTR f)
     {
         if (FAILED(hr))
         {
+            TCHAR msg[256],buf[128];
+            wsprintf(msg, TEXT("%s\n%#x\n"), f, hr);
+            FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, hr, GetUserDefaultLangID(), buf, ARRAYSIZE(buf), NULL);
+            lstrcat(msg, buf);
+            MessageBox(NULL, msg, NULL, MB_ICONERROR);
             // Set a breakpoint on this line to catch DirectX API errors
             throw std::exception();
         }
     }
 }
+
+#define DXThrowIfFailed(hr) DX::ThrowIfFailed(hr,__FUNCTIONW__)
