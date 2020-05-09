@@ -119,8 +119,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     static bool s_in_sizemove = false;
     static bool s_in_suspend = false;
     static bool s_minimized = false;
-    static bool s_fullscreen = false;
-    // TODO: Set s_fullscreen to true if defaulting to fullscreen.
 
     auto game = reinterpret_cast<Game*>(GetWindowLongPtr(hWnd, GWLP_USERDATA));
 
@@ -218,31 +216,6 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         break;
 
     case WM_SYSKEYDOWN:
-        if (wParam == VK_RETURN && (lParam & 0x60000000) == 0x20000000)
-        {
-            static WINDOWINFO wi;
-            static WINDOWPLACEMENT wp;
-            // Implements the classic ALT+ENTER fullscreen toggle
-            if (s_fullscreen)
-            {
-                SetWindowLongPtr(hWnd, GWL_STYLE, wi.dwStyle);
-                SetWindowLongPtr(hWnd, GWL_EXSTYLE, wi.dwExStyle);
-
-                SetWindowPlacement(hWnd,&wp);
-            }
-            else
-            {
-                GetWindowInfo(hWnd, &wi);
-                GetWindowPlacement(hWnd, &wp);
-                SetWindowLongPtr(hWnd, GWL_STYLE, 0);
-                SetWindowLongPtr(hWnd, GWL_EXSTYLE, WS_EX_TOPMOST);
-
-                ShowWindow(hWnd, SW_SHOWMAXIMIZED);
-            }
-
-            s_fullscreen = !s_fullscreen;
-        }
-
 	case WM_KEYDOWN:
 	case WM_SYSKEYUP:
 	case WM_KEYUP:

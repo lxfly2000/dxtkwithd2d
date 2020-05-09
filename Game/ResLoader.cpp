@@ -267,7 +267,7 @@ HRESULT LoadFontFromSystem(ID3D11Device*device,std::unique_ptr<SpriteFont> &outS
 		eachglyph.Subrect.top = std::lround(drawPos.y);
 		//可绘制彩色文字（绘制彩色文字功能要求系统为Win8.1/10，在Win7中会使D2D区域无法显示）
 		fontRT->DrawText(str, lstrlen(str), textformat, D2D1::RectF(drawPos.x + ovhMet.left, drawPos.y,
-			(float)textureWidth, (float)textureHeight), fontColorBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT);
+			(float)textureWidth, (float)textureHeight), fontColorBrush);
 		float chPxWidth = textlayout->GetMaxWidth() + ovhMet.left + ovhMet.right;
 		drawPos.x += chPxWidth;
 		eachglyph.Subrect.right = std::lround(drawPos.x);
@@ -460,9 +460,11 @@ HRESULT CreateD2DArc(ComPtr<ID2D1PathGeometry> &arc, ID2D1Factory *factory, floa
 	C(arc->Open(sink.ReleaseAndGetAddressOf()));
 	sink->BeginFigure(D2D1::Point2F(r*cosf(DirectX::XMConvertToRadians(startDegree)),
 		r*sinf(DirectX::XMConvertToRadians(startDegree))), D2D1_FIGURE_BEGIN_HOLLOW);
+	//为避免大小弧与同起点到点的歧义，将弧均分成两段保证都是小弧
+	sink->AddArc(D2D1::ArcSegment(D2D1::Point2F(r*cosf(DirectX::XMConvertToRadians((startDegree+endDegree)/2.0f)),
+		r*sinf(DirectX::XMConvertToRadians((startDegree + endDegree) / 2.0f))), D2D1::SizeF(r, r), 0, D2D1_SWEEP_DIRECTION_CLOCKWISE, D2D1_ARC_SIZE_SMALL));
 	sink->AddArc(D2D1::ArcSegment(D2D1::Point2F(r*cosf(DirectX::XMConvertToRadians(endDegree)),
-		r*sinf(DirectX::XMConvertToRadians(endDegree))), D2D1::SizeF(r, r), 0, D2D1_SWEEP_DIRECTION_CLOCKWISE,
-		endDegree - startDegree > 180.0f ? D2D1_ARC_SIZE_LARGE : D2D1_ARC_SIZE_SMALL));
+		r*sinf(DirectX::XMConvertToRadians(endDegree))), D2D1::SizeF(r, r), 0, D2D1_SWEEP_DIRECTION_CLOCKWISE, D2D1_ARC_SIZE_SMALL));
 	sink->EndFigure(D2D1_FIGURE_END_OPEN);
 	C(sink->Close());
 	return S_OK;

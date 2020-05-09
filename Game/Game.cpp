@@ -38,6 +38,8 @@ void Game::Initialize(HWND window, int width, int height)
     */
     mygame.OnNewHWNDWindowSize(m_outputWidth, m_outputHeight);
     mygame.ResetHWNDWindowSize();
+    //如果不需要全屏，此处不能调用ToggleFullscreen(false)，否则会显示不出窗口标题栏
+    //mygame.ToggleFullscreen(true);
 }
 
 void Game::Uninitialize()

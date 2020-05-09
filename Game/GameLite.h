@@ -56,11 +56,15 @@ public:
 	int MapMousePointToScreenX(const DirectX::Mouse* p);
 	int MapMousePointToScreenY(const DirectX::Mouse* p);
 	void ResetHWNDWindowSize();
+	void ToggleFullscreen(bool fullscreen);
 private:
 	//这放资源
 	RECT screenSize;//存放屏幕尺寸
 	RECT hwndWindowSize;
 	HWND hwndWindow;
+	WINDOWPLACEMENT hwndWindowPlacement;
+	WINDOWINFO hwndWindowInfo;
+	bool isFullscreen;
 	bool isPausedFromSystem;//是否因最小化等原因而使程序暂停运行了
 	ID3D11Device *d3ddevice;//D3D设备指针，仅保存，无须释放
 	std::unique_ptr<DirectX::SpriteBatch> spriteBatch;//DXTK的精灵处理对象

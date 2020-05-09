@@ -6,7 +6,8 @@
 
 #define PICPOS_FORMAT L"%4d,%4d"
 
-GameLite::GameLite()
+GameLite::GameLite():isFullscreen(false),circleBrush(),circle(),cursorposText(),d2ddevice(),d2drendertarget(),d3ddevice(),
+fcounter(0),hwndWindow(),hwndWindowInfo(),hwndWindowPlacement(),hwndWindowSize(),outlineBrush(),picpostext(),pic()
 {
 	screenSize.left = screenSize.top = 0;
 	screenSize.right = GAME_WINDOW_WIDTH;
@@ -103,13 +104,19 @@ void GameLite::Update(float elapsedTime)
 		picToScrRect.right += 1;
 		wsprintf(picpostext, PICPOS_FORMAT, picToScrRect.left, picToScrRect.top);
 	}
-	if (km.IsOnKeyDown(keyboard.get(), DirectX::Keyboard::R))
+	if (km.IsOnKeyDown(keyboard.get(), DirectX::Keyboard::F11))
 	{
 		ResetHWNDWindowSize();
 	}
+	if (km.IsOnKeyDown(keyboard.get(), DirectX::Keyboard::Enter))
+	{
+		auto s = keyboard.get()->GetState();
+		if (s.LeftAlt || s.RightAlt)
+			ToggleFullscreen(!isFullscreen);
+	}
 	
-	circle.point.x = MapMousePointToScreenX(mouse.get());
-	circle.point.y = MapMousePointToScreenY(mouse.get());
+	circle.point.x = (float)MapMousePointToScreenX(mouse.get());
+	circle.point.y = (float)MapMousePointToScreenY(mouse.get());
 	wsprintf(cursorposText, PICPOS_FORMAT, (int)circle.point.x, (int)circle.point.y);
 
 	fcounter++;
@@ -131,7 +138,7 @@ void GameLite::Draw()
 	//D2D1_DRAW_TEXT_OPTIONS_NONE：不使用高级绘制选项
 	d2drendertarget->DrawText(cursorposText, lstrlen(cursorposText), textformat.Get(),
 		D2D1::RectF((float)screenSize.left, (float)screenSize.top, (float)screenSize.right,
-		(float)screenSize.bottom), circleBrush, D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT);
+		(float)screenSize.bottom), circleBrush);
 	D2DDrawGeometryWithOutline(d2drendertarget, btgeometry.Get(), 0, (float)screenSize.bottom,
 		bluetowhiteBrush.Get(), outlineBrush, 1);
 	d2drendertarget->EndDraw();
@@ -187,18 +194,45 @@ int GameLite::MapMousePointToScreenY(const DirectX::Mouse* p)
 
 void GameLite::ResetHWNDWindowSize()
 {
+	if (!isFullscreen)
+		GetWindowPlacement(hwndWindow, &hwndWindowPlacement);
 	RECT w{ 0,0,GetScreenWidth(), GetScreenHeight() };
-	w.right *= GetDeviceCaps(GetDC(hwndWindow),LOGPIXELSX) / USER_DEFAULT_SCREEN_DPI;
+	w.right *= GetDeviceCaps(GetDC(hwndWindow), LOGPIXELSX) / USER_DEFAULT_SCREEN_DPI;
 	w.bottom *= GetDeviceCaps(GetDC(hwndWindow), LOGPIXELSY) / USER_DEFAULT_SCREEN_DPI;
-	AdjustWindowRect(&w, GetWindowLongPtr(hwndWindow, GWL_STYLE), FALSE);
-	ShowWindow(hwndWindow, SW_NORMAL);
-	SetWindowPos(hwndWindow, NULL, 0, 0, w.right - w.left, w.bottom - w.top, SWP_NOZORDER | SWP_NOMOVE);
+	AdjustWindowRect(&w, isFullscreen ? hwndWindowInfo.dwStyle : GetWindowLongPtr(hwndWindow, GWL_STYLE), FALSE);
+	hwndWindowPlacement.rcNormalPosition.right = hwndWindowPlacement.rcNormalPosition.left + w.right - w.left;
+	hwndWindowPlacement.rcNormalPosition.bottom = hwndWindowPlacement.rcNormalPosition.top + w.bottom - w.top;
+	if (!isFullscreen)
+		SetWindowPlacement(hwndWindow, &hwndWindowPlacement);
+}
+
+void GameLite::ToggleFullscreen(bool fullscreen)
+{
+	isFullscreen = fullscreen;
+	if (isFullscreen)
+	{
+		GetWindowInfo(hwndWindow, &hwndWindowInfo);
+		GetWindowPlacement(hwndWindow, &hwndWindowPlacement);
+		SetWindowLongPtr(hwndWindow, GWL_STYLE, 0);
+		SetWindowLongPtr(hwndWindow, GWL_EXSTYLE, WS_EX_TOPMOST);
+
+		SetWindowPos(hwndWindow, HWND_TOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+		ShowWindow(hwndWindow, SW_SHOWMAXIMIZED);
+	}
+	else
+	{
+		SetWindowLongPtr(hwndWindow, GWL_STYLE, hwndWindowInfo.dwStyle);
+		SetWindowLongPtr(hwndWindow, GWL_EXSTYLE, hwndWindowInfo.dwExStyle);
+
+		SetWindowPlacement(hwndWindow, &hwndWindowPlacement);
+		SetWindowPos(hwndWindow, HWND_NOTOPMOST, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE);
+	}
 }
 
 HRESULT GameLite::CreateHPCircle(Microsoft::WRL::ComPtr<ID2D1PathGeometry>& _circle, float r, float percent)
 {
 	circle.radiusX = circle.radiusY = r;
-	return CreateD2DArc(_circle, d2ddevice, r, 630.0f - 360.0f*percent, 630.0f);
+	return CreateD2DArc(_circle, d2ddevice, r, 270.0f - 360.0f*percent, 270.0f);
 }
 
 void GameLite::DrawHPCircle(ID2D1PathGeometry * _circle, float x, float y, float w, float bw,
