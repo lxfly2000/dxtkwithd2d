@@ -197,8 +197,8 @@ void GameLite::ResetHWNDWindowSize()
 	if (!isFullscreen)
 		GetWindowPlacement(hwndWindow, &hwndWindowPlacement);
 	RECT w{ 0,0,GetScreenWidth(), GetScreenHeight() };
-	w.right *= GetDeviceCaps(GetDC(hwndWindow), LOGPIXELSX) / USER_DEFAULT_SCREEN_DPI;
-	w.bottom *= GetDeviceCaps(GetDC(hwndWindow), LOGPIXELSY) / USER_DEFAULT_SCREEN_DPI;
+	w.right = w.right * GetDeviceCaps(GetDC(hwndWindow), LOGPIXELSX) / USER_DEFAULT_SCREEN_DPI;
+	w.bottom = w.bottom * GetDeviceCaps(GetDC(hwndWindow), LOGPIXELSY) / USER_DEFAULT_SCREEN_DPI;
 	AdjustWindowRect(&w, isFullscreen ? hwndWindowInfo.dwStyle : GetWindowLongPtr(hwndWindow, GWL_STYLE), FALSE);
 	hwndWindowPlacement.rcNormalPosition.right = hwndWindowPlacement.rcNormalPosition.left + w.right - w.left;
 	hwndWindowPlacement.rcNormalPosition.bottom = hwndWindowPlacement.rcNormalPosition.top + w.bottom - w.top;
