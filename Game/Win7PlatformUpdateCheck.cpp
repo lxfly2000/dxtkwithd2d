@@ -124,6 +124,7 @@ void Subthread_Download(BOOL arg)
 		title.append(retFileName);
 		title.append(TEXT(", 安装完成后系统将重启"));
 		SetProgressDialogTitle(title.c_str());
+		SetProgressDialogBarValue(-1);
 		std::wstring param = TEXT("\"");
 		param.append(retFilePath);
 		param.append(TEXT("\" /quiet"));
