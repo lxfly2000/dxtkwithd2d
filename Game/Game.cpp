@@ -176,7 +176,6 @@ void Game::CreateDevice()
     static const D3D_FEATURE_LEVEL featureLevels [] =
     {
         // TODO: Modify for supported Direct3D feature levels
-        D3D_FEATURE_LEVEL_11_1,
         D3D_FEATURE_LEVEL_11_0,
         D3D_FEATURE_LEVEL_10_1,
         D3D_FEATURE_LEVEL_10_0,
@@ -273,7 +272,7 @@ void Game::CreateResources()
     else
     {
         // First, retrieve the underlying DXGI Device from the D3D Device.
-        ComPtr<IDXGIDevice1> dxgiDevice;
+        ComPtr<IDXGIDevice> dxgiDevice;
         DXThrowIfFailed(m_d3dDevice.As(&dxgiDevice));
 
         // Identify the physical adapter (GPU or card) this device is running on.
@@ -281,29 +280,27 @@ void Game::CreateResources()
         DXThrowIfFailed(dxgiDevice->GetAdapter(dxgiAdapter.GetAddressOf()));
 
         // And obtain the factory object that created it.
-        ComPtr<IDXGIFactory2> dxgiFactory;
+        ComPtr<IDXGIFactory> dxgiFactory;
         DXThrowIfFailed(dxgiAdapter->GetParent(IID_PPV_ARGS(dxgiFactory.GetAddressOf())));
 
         // Create a descriptor for the swap chain.
-        DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
-        swapChainDesc.Width = backBufferWidth;
-        swapChainDesc.Height = backBufferHeight;
-        swapChainDesc.Format = backBufferFormat;
+        DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
+        swapChainDesc.BufferDesc.Width = backBufferWidth;
+        swapChainDesc.BufferDesc.Height = backBufferHeight;
+        swapChainDesc.BufferDesc.Format = backBufferFormat;
+        swapChainDesc.BufferDesc.RefreshRate.Denominator = 60;
+        swapChainDesc.BufferDesc.RefreshRate.Numerator = 1;
         swapChainDesc.SampleDesc.Count = 1;
         swapChainDesc.SampleDesc.Quality = 0;
         swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
         swapChainDesc.BufferCount = backBufferCount;
-
-        DXGI_SWAP_CHAIN_FULLSCREEN_DESC fsSwapChainDesc = {};
-        fsSwapChainDesc.Windowed = TRUE;
+        swapChainDesc.OutputWindow = m_window;
+        swapChainDesc.Windowed = TRUE;
 
         // Create a SwapChain from a Win32 window.
-        DXThrowIfFailed(dxgiFactory->CreateSwapChainForHwnd(
+        DXThrowIfFailed(dxgiFactory->CreateSwapChain(
             m_d3dDevice.Get(),
-            m_window,
             &swapChainDesc,
-            &fsSwapChainDesc,
-            nullptr,
             m_swapChain.ReleaseAndGetAddressOf()
             ));
 

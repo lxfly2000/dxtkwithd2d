@@ -9,12 +9,8 @@
 
 #define MAX_TEXTURE_DIMENSION 8192//²Î¿¼£ºhttps://msdn.microsoft.com/library/windows/desktop/ff476876.aspx
 
-#ifdef _DEBUG
-HRESULT _debug_hr = S_OK;
-#define C(sth) _debug_hr=sth;if(FAILED(_debug_hr))return _debug_hr
-#else
-#define C(sth) sth
-#endif
+HRESULT _check_hr = S_OK;
+#define C(sth) _check_hr=sth;if(FAILED(_check_hr))return _check_hr
 
 using Microsoft::WRL::ComPtr;
 using namespace DirectX;

@@ -3,6 +3,7 @@
 
 #include "pch.h"
 #include "GameLite.h"
+#include "Win7PlatformUpdateCheck.h"
 
 #define PICPOS_FORMAT L"%4d,%4d"
 
@@ -22,13 +23,13 @@ void GameLite::Init(ID3D11Device *pdevice, ID3D11DeviceContext *pcontext, ID2D1F
 	d3ddevice = pdevice;
 	d2ddevice = pd2ddevice;
 	spriteBatch = std::make_unique<DirectX::SpriteBatch>(pcontext);
-	LoadTextureFromFile(d3ddevice,L"C:\\Program Files\\Windows Media Player\\Media Renderer\\DMR_120.png",
-		&pic, (int*)&picToScrRect.right, (int*)&picToScrRect.bottom);
+	DXThrowIfFailed(LoadTextureFromFile(d3ddevice,L"C:\\Program Files\\Windows Media Player\\Media Renderer\\DMR_120.png",
+		&pic, (int*)&picToScrRect.right, (int*)&picToScrRect.bottom));
 	keyboard = std::make_unique<DirectX::Keyboard>();
 	mouse = std::make_unique<DirectX::Mouse>();
 	mouse->SetWindow(hwnd);
-	LoadFontFromSystem(d3ddevice,ssfont, 1024, 1024, L"宋体", 48, D2D1::ColorF(D2D1::ColorF::White),
-		DWRITE_FONT_WEIGHT_REGULAR);
+	DXThrowIfFailed(LoadFontFromSystem(d3ddevice,ssfont, 1024, 1024, L"宋体", 48, D2D1::ColorF(D2D1::ColorF::White),
+		DWRITE_FONT_WEIGHT_REGULAR));
 	wsprintf(picpostext, PICPOS_FORMAT, picToScrRect.left, picToScrRect.top);
 	textcenterpos = ssfont->MeasureString(picpostext);
 	textcenterpos.x /= 2;
@@ -38,10 +39,10 @@ void GameLite::Init(ID3D11Device *pdevice, ID3D11DeviceContext *pcontext, ID2D1F
 		DirectX::SimpleMath::Vector3::Zero, DirectX::SimpleMath::Vector3::UnitY);
 	fcounter = 0;
 
-	CreateDWTextFormat(textformat, L"宋体", DWRITE_FONT_WEIGHT_NORMAL, 48.0f);
-	CreateDWFontFace(fontface, textformat.Get());
-	CreateD2DGeometryFromText(btgeometry, d2ddevice, fontface.Get(), textformat->GetFontSize(), L"Hello!", 6);
-	textformat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER);
+	DXThrowIfFailed(CreateDWTextFormat(textformat, L"宋体", DWRITE_FONT_WEIGHT_NORMAL, 48.0f));
+	DXThrowIfFailed(CreateDWFontFace(fontface, textformat.Get()));
+	DXThrowIfFailed(CreateD2DGeometryFromText(btgeometry, d2ddevice, fontface.Get(), textformat->GetFontSize(), L"Hello!", 6));
+	DXThrowIfFailed(textformat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER));
 	//textformat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 	circle.radiusX = circle.radiusY = 120.0f;
 }
@@ -55,15 +56,23 @@ void GameLite::Uninit()
 void GameLite::InitD2D(IDXGISwapChain *pswchain)
 {
 	IDXGISurface *surface;
-	pswchain->GetBuffer(0, IID_PPV_ARGS(&surface));
-	d2ddevice->CreateDxgiSurfaceRenderTarget(surface, D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT,
-		D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED)), &d2drendertarget);
+	DXThrowIfFailed(pswchain->GetBuffer(0, IID_PPV_ARGS(&surface)));
+	try
+	{
+		DXThrowIfFailed(d2ddevice->CreateDxgiSurfaceRenderTarget(surface, D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT,
+			D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED)), &d2drendertarget));
+	}
+	catch (HRESULT hr)
+	{
+		if (!Win7PlatformUpdateCheck(hwndWindow, hr))
+			throw hr;
+	}
 	surface->Release();
 
-	d2drendertarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &circleBrush);
-	d2drendertarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::OrangeRed), &outlineBrush);
-	CreateD2DLinearGradientBrush(bluetowhiteBrush, d2drendertarget, 0, -50, 0, 0,
-		D2D1::ColorF(D2D1::ColorF::Blue), D2D1::ColorF(D2D1::ColorF::White));
+	DXThrowIfFailed(d2drendertarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &circleBrush));
+	DXThrowIfFailed(d2drendertarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::OrangeRed), &outlineBrush));
+	DXThrowIfFailed(CreateD2DLinearGradientBrush(bluetowhiteBrush, d2drendertarget, 0, -50, 0, 0,
+		D2D1::ColorF(D2D1::ColorF::Blue), D2D1::ColorF(D2D1::ColorF::White)));
 }
 
 void GameLite::UninitD2D()
@@ -266,7 +275,7 @@ int GameLite::GetHWNDWindowHeight()
 void GameLite::OnBeforePresent(IDXGISwapChain*swapChain)
 {
 	if (km.IsOnKeyDown(keyboard.get(),DirectX::Keyboard::P))
-		TakeScreenShotToFile(d3ddevice,swapChain,L"shot.png");
+		DXThrowIfFailed(TakeScreenShotToFile(d3ddevice,swapChain,L"shot.png"));
 	km.UpdateState(keyboard.get());
 }
 

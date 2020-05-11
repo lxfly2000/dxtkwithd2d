@@ -13,6 +13,7 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="GameLite.h" />
     <ClInclude Include="ResLoader.h" />
+    <ClInclude Include="Win7PlatformUpdateCheck.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -20,6 +21,7 @@
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="GameLite.cpp" />
     <ClCompile Include="ResLoader.cpp" />
+    <ClCompile Include="Win7PlatformUpdateCheck.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="directx.ico">

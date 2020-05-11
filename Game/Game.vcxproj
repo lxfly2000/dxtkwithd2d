@@ -161,6 +161,7 @@
     <ClInclude Include="ResLoader.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="StepTimer.h" />
+    <ClInclude Include="Win7PlatformUpdateCheck.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Game.cpp" />
@@ -173,6 +174,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="ResLoader.cpp" />
+    <ClCompile Include="Win7PlatformUpdateCheck.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="directx.ico" />
@@ -184,11 +186,11 @@
     <ResourceCompile Include="resource.rc" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\DirectXTex\DirectXTex\DirectXTex_Desktop_2019_Win10.vcxproj">
+    <ProjectReference Include="..\DirectXTex\DirectXTex\DirectXTex_Desktop_2019.vcxproj">
       <Project>{371b9fa9-4c90-4ac6-a123-aced756d6c77}</Project>
     </ProjectReference>
-    <ProjectReference Include="..\DirectXTK\DirectXTK_Desktop_2019_Win10.vcxproj">
-      <Project>{e0b52ae7-e160-4d32-bf3f-910b785e5a8e}</Project>
+    <ProjectReference Include="..\DirectXTK\DirectXTK_Desktop_2019.vcxproj">
+      <Project>{b519fc9d-9611-4125-b7e6-e580accfb236}</Project>
     </ProjectReference>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
