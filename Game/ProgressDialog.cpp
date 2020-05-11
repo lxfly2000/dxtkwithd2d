@@ -27,16 +27,22 @@ LONG SetProgressDialogBarValue(int percentage)
 	if (percentage == -1)
 	{
 		LONG s = GetWindowLongPtr(hpg, GWL_STYLE);
-		s |= PBS_MARQUEE;
-		SetWindowLongPtr(hpg, GWL_STYLE, s);
-		SendDlgItemMessage(hwndDialog, IDC_PROGRESS_MAIN, PBM_SETMARQUEE, TRUE, 0);
+		if (!(s & PBS_MARQUEE))
+		{
+			s |= PBS_MARQUEE;
+			SetWindowLongPtr(hpg, GWL_STYLE, s);
+			SendDlgItemMessage(hwndDialog, IDC_PROGRESS_MAIN, PBM_SETMARQUEE, TRUE, 0);
+		}
 	}
 	else
 	{
 		LONG s = GetWindowLongPtr(hpg, GWL_STYLE);
-		s &= ~PBS_MARQUEE;
-		SetWindowLongPtr(hpg, GWL_STYLE, s);
-		SendDlgItemMessage(hwndDialog, IDC_PROGRESS_MAIN, PBM_SETMARQUEE, FALSE, 0);
+		if (s & PBS_MARQUEE)
+		{
+			s &= ~PBS_MARQUEE;
+			SetWindowLongPtr(hpg, GWL_STYLE, s);
+			SendDlgItemMessage(hwndDialog, IDC_PROGRESS_MAIN, PBM_SETMARQUEE, FALSE, 0);
+		}
 	}
 	return SendDlgItemMessage(hwndDialog, IDC_PROGRESS_MAIN, PBM_SETPOS, percentage, 0);
 }
