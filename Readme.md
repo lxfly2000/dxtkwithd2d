@@ -13,6 +13,7 @@
 我的电脑的DirectX版本是11.0，在MSDN网站上查到的资料说Direct2D只能在D3D 10.1, 11.1, 12及更高版本中才能与D3D结合使用，然而在我测试时发现D3D11.0也能使用D2D, 条件是：
 * 在创建D3D设备时指定`D3D11_CREATE_DEVICE_BGRA_SUPPORT`标志；
 * 在创建D2D的DXGI渲染目标时的像素格式指定为`D2D1_ALPHA_MODE_PREMULTIPLIED`。
+
 经测试只要系统安装了DX11.1，即使用DX11也是可以的。
 
 ### Note
