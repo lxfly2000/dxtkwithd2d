@@ -23,6 +23,21 @@ BOOL SetProgressDialogTitle(LPCTSTR title)
 
 LONG SetProgressDialogBarValue(int percentage)
 {
+	HWND hpg = GetDlgItem(hwndDialog, IDC_PROGRESS_MAIN);
+	if (percentage == -1)
+	{
+		LONG s = GetWindowLongPtr(hpg, GWL_STYLE);
+		s |= PBS_MARQUEE;
+		SetWindowLongPtr(hpg, GWL_STYLE, s);
+		SendDlgItemMessage(hwndDialog, IDC_PROGRESS_MAIN, PBM_SETMARQUEE, TRUE, 0);
+	}
+	else
+	{
+		LONG s = GetWindowLongPtr(hpg, GWL_STYLE);
+		s &= ~PBS_MARQUEE;
+		SetWindowLongPtr(hpg, GWL_STYLE, s);
+		SendDlgItemMessage(hwndDialog, IDC_PROGRESS_MAIN, PBM_SETMARQUEE, FALSE, 0);
+	}
 	return SendDlgItemMessage(hwndDialog, IDC_PROGRESS_MAIN, PBM_SETPOS, percentage, 0);
 }
 
@@ -73,4 +88,10 @@ void ProgressSetOnClickCancel(void(*fCallback)())
 void ProgressSetOnShow(void(*fCallback)())
 {
 	pp.pfOnShow = fCallback;
+}
+
+BOOL ProgressSetEnableClose(BOOL b)
+{
+	EnableMenuItem(GetSystemMenu(hwndDialog, FALSE), SC_CLOSE, b ? MF_ENABLED : MF_DISABLED);
+	return EnableWindow(GetDlgItem(hwndDialog, IDCANCEL), b);
 }

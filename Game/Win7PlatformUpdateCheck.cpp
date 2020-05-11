@@ -2,7 +2,7 @@
 #include "Win7PlatformUpdateCheck.h"
 #include "ProgressDialog.h"
 #include <VersionHelpers.h>
-
+#include<shellapi.h>
 #include<urlmon.h>
 #include<sstream>
 #include<thread>
@@ -118,7 +118,35 @@ void Subthread_Download(BOOL arg)
 	SetProgressDialogTitle(title.c_str());
 	dcb.downloadStatus = 1;
 	if (URLDownloadToCacheFile(NULL, tURL, retFilePath, ARRAYSIZE(retFilePath) - 1, 0, &dcb) == S_OK)
+	{
+		ProgressSetEnableClose(FALSE);
+		title = TEXT("正在安装：");
+		title.append(retFileName);
+		title.append(TEXT(", 安装完成后系统将重启"));
+		SetProgressDialogTitle(title.c_str());
+		std::wstring param = TEXT("\"");
+		param.append(retFilePath);
+		param.append(TEXT("\" /quiet"));
+		SHELLEXECUTEINFO se{};
+		se.cbSize = sizeof se;
+		se.lpVerb = TEXT("open");
+		se.lpFile = TEXT("wusa.exe");
+		se.lpParameters = param.c_str();
+		se.fMask = SEE_MASK_NOCLOSEPROCESS;
+		se.nShow = SW_NORMAL;
+		ShellExecuteEx(&se);
+		WaitForSingleObject(se.hProcess, INFINITE);
+		DWORD retcode;
+		GetExitCodeProcess(se.hProcess, &retcode);
+		CloseHandle(se.hProcess);
+		if (retcode)
+		{
+			TCHAR msg[256];
+			wsprintf(msg, TEXT("安装失败，错误码：%#x"), retcode);
+			MessageBox(NULL, msg, NULL, MB_ICONERROR);
+		}
 		EndProgressDialog(IDOK);
+	}
 }
 
 void DownloadPatch(HWND hwnd)
@@ -126,21 +154,16 @@ void DownloadPatch(HWND hwnd)
 	ProgressSetOnClickCancel([]()
 		{
 			dcb.downloadStatus = 3;
-			tSub.join();
 			EndProgressDialog(IDCANCEL);//不知道为啥这句放到Subthread_Download中去会在程序退出时报错
 		});
 	ProgressSetOnShow([]()
 		{
 			tSub = std::thread(Subthread_Download, Is64bitSystem());
 		});
-	if (ProgressDialog(hwnd, TEXT("取消(&C)")) == IDOK)
-	{
-		tSub.join();
-		MessageBox(hwnd, L"TODO:后续安装过程。", retFilePath, NULL);//TODO
-	}
-	else
+	if (ProgressDialog(hwnd, TEXT("取消(&C)")) != IDOK)
 		MessageBox(hwnd, L"下载被中断，您需要稍后手动下载该文件以完成安装。\n"
 			"Download was interrupted, please download this file manually later to finish setup.", retFileName, MB_ICONEXCLAMATION);
+	tSub.join();
 }
 
 BOOL Win7PlatformUpdateCheck(HWND hwnd, HRESULT hr)
