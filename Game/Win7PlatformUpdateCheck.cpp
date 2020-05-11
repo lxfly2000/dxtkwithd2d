@@ -92,9 +92,7 @@ private:
 	{
 		if (downloadStatus == 2 || downloadStatus == 3)
 			return E_ABORT;
-		if (ulProgressMax == 0)
-			SetProgressDialogBarValue(0);
-		else
+		if (ulProgressMax)
 			SetProgressDialogBarValue(ulProgress * 100 / ulProgressMax);
 		return S_OK;
 	}
