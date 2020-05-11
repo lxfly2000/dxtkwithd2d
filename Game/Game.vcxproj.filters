@@ -14,6 +14,8 @@
     <ClInclude Include="GameLite.h" />
     <ClInclude Include="ResLoader.h" />
     <ClInclude Include="Win7PlatformUpdateCheck.h" />
+    <ClInclude Include="ProgressDialog.h" />
+    <ClInclude Include="ProgressDialogRes.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp" />
@@ -22,6 +24,7 @@
     <ClCompile Include="GameLite.cpp" />
     <ClCompile Include="ResLoader.cpp" />
     <ClCompile Include="Win7PlatformUpdateCheck.cpp" />
+    <ClCompile Include="ProgressDialog.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Image Include="directx.ico">
@@ -35,5 +38,6 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="resource.rc" />
+    <ResourceCompile Include="ProgressDialog.rc" />
   </ItemGroup>
 </Project>

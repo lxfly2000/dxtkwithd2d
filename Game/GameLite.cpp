@@ -64,7 +64,9 @@ void GameLite::InitD2D(IDXGISwapChain *pswchain)
 	}
 	catch (HRESULT hr)
 	{
-		if (!Win7PlatformUpdateCheck(hwndWindow, hr))
+		if (Win7PlatformUpdateCheck(hwndWindow, hr))
+			ExitProcess(hr);
+		else
 			throw hr;
 	}
 	surface->Release();
