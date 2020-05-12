@@ -164,7 +164,7 @@ void DownloadPatch(HWND hwnd)
 		});
 	switch (ProgressDialog(hwnd, TEXT("取消(&C)")))
 	{
-	case E_ABORT:default:
+	case E_ABORT:
 		MessageBox(hwnd, L"下载被中断，您需要稍后手动下载更新以完成安装。\n"
 			"Download was interrupted, please download this update manually later to finish setup.", retFileName, MB_ICONEXCLAMATION);
 		break;
@@ -172,7 +172,11 @@ void DownloadPatch(HWND hwnd)
 		MessageBox(hwnd, L"下载的文件不完整或无法读取，您需要稍后手动下载更新以完成安装。\n"
 			"File corrupted or unable to read, please download this update manually later to finish setup.", retFileName, MB_ICONEXCLAMATION);
 		break;
-	case S_OK:
+	case 1641:
+		//程序要求重新启动系统
+		break;
+	case S_OK:default:
+		//无动作
 		break;
 	}
 	tSub.join();
