@@ -106,6 +106,7 @@ public:
 static StatusCallback dcb;
 static TCHAR retFilePath[MAX_PATH]{};
 static LPCTSTR retFileName = NULL;
+static int downloadRetryLeft = 3;
 
 void Subthread_Download(BOOL arg)
 {
@@ -115,6 +116,8 @@ void Subthread_Download(BOOL arg)
 	title.append(retFileName);
 	SetProgressDialogTitle(title.c_str());
 	dcb.downloadStatus = 1;
+	ProgressSetEnableClose(TRUE);
+	downloadRetryLeft--;
 	if (URLDownloadToCacheFile(NULL, tURL, retFilePath, ARRAYSIZE(retFilePath) - 1, 0, &dcb) == S_OK)
 	{
 		ProgressSetEnableClose(FALSE);
@@ -138,13 +141,13 @@ void Subthread_Download(BOOL arg)
 		DWORD retcode;
 		GetExitCodeProcess(se.hProcess, &retcode);
 		CloseHandle(se.hProcess);
-		if (retcode)
+		if (retcode == 0x570 && downloadRetryLeft)
 		{
-			TCHAR msg[256];
-			wsprintf(msg, TEXT("安装失败，错误码：%#x"), retcode);
-			MessageBox(NULL, msg, NULL, MB_ICONERROR);
+			DeleteFile(retFilePath);
+			Subthread_Download(arg);
+			return;
 		}
-		EndProgressDialog(IDOK);
+		EndProgressDialog(retcode);
 	}
 }
 
@@ -153,15 +156,25 @@ void DownloadPatch(HWND hwnd)
 	ProgressSetOnClickCancel([]()
 		{
 			dcb.downloadStatus = 3;
-			EndProgressDialog(IDCANCEL);//不知道为啥这句放到Subthread_Download中去会在程序退出时报错
+			EndProgressDialog(E_ABORT);//不知道为啥这句放到Subthread_Download中去会在程序退出时报错
 		});
 	ProgressSetOnShow([]()
 		{
 			tSub = std::thread(Subthread_Download, Is64bitSystem());
 		});
-	if (ProgressDialog(hwnd, TEXT("取消(&C)")) != IDOK)
-		MessageBox(hwnd, L"下载被中断，您需要稍后手动下载该文件以完成安装。\n"
-			"Download was interrupted, please download this file manually later to finish setup.", retFileName, MB_ICONEXCLAMATION);
+	switch (ProgressDialog(hwnd, TEXT("取消(&C)")))
+	{
+	case E_ABORT:default:
+		MessageBox(hwnd, L"下载被中断，您需要稍后手动下载更新以完成安装。\n"
+			"Download was interrupted, please download this update manually later to finish setup.", retFileName, MB_ICONEXCLAMATION);
+		break;
+	case 0x570:
+		MessageBox(hwnd, L"下载的文件不完整或无法读取，您需要稍后手动下载更新以完成安装。\n"
+			"File corrupted or unable to read, please download this update manually later to finish setup.", retFileName, MB_ICONEXCLAMATION);
+		break;
+	case S_OK:
+		break;
+	}
 	tSub.join();
 }
 

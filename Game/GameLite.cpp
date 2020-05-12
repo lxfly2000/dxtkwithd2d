@@ -59,8 +59,8 @@ void GameLite::InitD2D(IDXGISwapChain *pswchain)
 	DXThrowIfFailed(pswchain->GetBuffer(0, IID_PPV_ARGS(&surface)));
 	try
 	{
-		DXThrowIfFailed(d2ddevice->CreateDxgiSurfaceRenderTarget(surface, D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT,
-			D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED)), &d2drendertarget));
+		DXThrowIfFailedHWND(d2ddevice->CreateDxgiSurfaceRenderTarget(surface, D2D1::RenderTargetProperties(D2D1_RENDER_TARGET_TYPE_DEFAULT,
+			D2D1::PixelFormat(DXGI_FORMAT_UNKNOWN, D2D1_ALPHA_MODE_PREMULTIPLIED)), &d2drendertarget),hwndWindow);
 	}
 	catch (HRESULT hr)
 	{

@@ -63,7 +63,7 @@
 
 namespace DX
 {
-    inline void ThrowIfFailed(HRESULT hr,LPCTSTR file,LPCTSTR func,LPCTSTR code,int line)
+    inline void ThrowIfFailed(HRESULT hr,LPCTSTR file,LPCTSTR func,LPCTSTR code,int line,HWND hwnd)
     {
         if (FAILED(hr))
         {
@@ -71,11 +71,12 @@ namespace DX
             wsprintf(msg, TEXT("%s : %d :\n%s :\n%s\n%#x\n"), file, line, func, code, hr);
             FormatMessage(FORMAT_MESSAGE_FROM_SYSTEM, NULL, hr, GetUserDefaultLangID(), buf, ARRAYSIZE(buf), NULL);
             lstrcat(msg, buf);
-            MessageBox(NULL, msg, NULL, MB_ICONERROR);
+            MessageBox(hwnd, msg, NULL, MB_ICONERROR);
             // Set a breakpoint on this line to catch DirectX API errors
             throw hr;
         }
     }
 }
 
-#define DXThrowIfFailed(hr) DX::ThrowIfFailed(hr,__FILEW__,__FUNCTIONW__,TEXT(_CRT_STRINGIZE(hr)),__LINE__)
+#define DXThrowIfFailed(hr) DX::ThrowIfFailed(hr,__FILEW__,__FUNCTIONW__,TEXT(_CRT_STRINGIZE(hr)),__LINE__,NULL)
+#define DXThrowIfFailedHWND(hr,hwnd) DX::ThrowIfFailed(hr,__FILEW__,__FUNCTIONW__,TEXT(_CRT_STRINGIZE(hr)),__LINE__,hwnd)
