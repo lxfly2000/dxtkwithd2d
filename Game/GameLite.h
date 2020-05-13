@@ -66,11 +66,11 @@ private:
 	WINDOWINFO hwndWindowInfo;
 	bool isFullscreen;
 	bool isPausedFromSystem;//是否因最小化等原因而使程序暂停运行了
-	ID3D11Device *d3ddevice;//D3D设备指针，仅保存，无须释放
+	Microsoft::WRL::ComPtr<ID3D11Device> d3ddevice;//D3D设备指针，仅保存，无须释放
 	std::unique_ptr<DirectX::SpriteBatch> spriteBatch;//DXTK的精灵处理对象
 
-	ID3D11ShaderResourceView *pic;//游戏类中有一个材质图
-	ID3D11ShaderResourceView *pictext;//文字材质图
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> pic;//游戏类中有一个材质图
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> pictext;//文字材质图
 	RECT picToScrRect;//存放图片位置与尺寸
 	RECT picTextToScrRect;
 	std::unique_ptr<DirectX::Keyboard> keyboard;//键盘对象
@@ -85,9 +85,9 @@ private:
 
 	KeyManager km;
 
-	ID2D1Factory *d2ddevice;//D2D设备指针，仅保存，无须释放
+	Microsoft::WRL::ComPtr<ID2D1Factory> d2ddevice;//D2D设备指针，仅保存，无须释放
 	Microsoft::WRL::ComPtr<ID2D1RenderTarget> d2drendertarget;//D2D绘图目标，因D2D绘图比较简单故不再封装
-	ID2D1SolidColorBrush *circleBrush, *outlineBrush;//不同颜色的笔刷资源
+	Microsoft::WRL::ComPtr<ID2D1SolidColorBrush> circleBrush, outlineBrush;//不同颜色的笔刷资源
 	D2D1_ELLIPSE circle;//圆形对象
 	Microsoft::WRL::ComPtr<ID2D1PathGeometry> hpcircle;//HP对象
 	Microsoft::WRL::ComPtr<IDWriteTextFormat> textformat;//DWrite排版系统的字体

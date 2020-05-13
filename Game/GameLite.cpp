@@ -23,9 +23,9 @@ void GameLite::Init(ID3D11Device *pdevice, ID3D11DeviceContext *pcontext, ID2D1F
 	d3ddevice = pdevice;
 	d2ddevice = pd2ddevice;
 	spriteBatch = std::make_unique<DirectX::SpriteBatch>(pcontext);
-	DXThrowIfFailed(LoadTextureFromFile(d3ddevice,L"C:\\Program Files\\Windows Media Player\\Media Renderer\\DMR_120.png",
+	DXThrowIfFailed(LoadTextureFromFile(d3ddevice.Get(),L"C:\\Program Files\\Windows Media Player\\Media Renderer\\DMR_120.png",
 		&pic, (int*)&picToScrRect.right, (int*)&picToScrRect.bottom));
-	DXThrowIfFailed(DrawTextToTexture(d3ddevice, TEXT("你好Hi!"), &pictext, (int*)&picTextToScrRect.right, (int*)&picTextToScrRect.bottom,
+	DXThrowIfFailed(DrawTextToTexture(d3ddevice.Get(), TEXT("你好Hi!"), &pictext, (int*)&picTextToScrRect.right, (int*)&picTextToScrRect.bottom,
 		TEXT("宋体"), 48.0f, D2D1::ColorF(D2D1::ColorF::Yellow), DWRITE_FONT_WEIGHT_REGULAR));
 	picTextToScrRect.left = GetScreenWidth() - picTextToScrRect.right;
 	picTextToScrRect.top = GetScreenHeight() - picTextToScrRect.bottom;
@@ -34,7 +34,7 @@ void GameLite::Init(ID3D11Device *pdevice, ID3D11DeviceContext *pcontext, ID2D1F
 	keyboard = std::make_unique<DirectX::Keyboard>();
 	mouse = std::make_unique<DirectX::Mouse>();
 	mouse->SetWindow(hwnd);
-	DXThrowIfFailed(LoadFontFromSystem(d3ddevice,ssfont, 1024, 1024, L"宋体", 48, D2D1::ColorF(D2D1::ColorF::White),
+	DXThrowIfFailed(LoadFontFromSystem(d3ddevice.Get(),ssfont, 1024, 1024, L"宋体", 48, D2D1::ColorF(D2D1::ColorF::White),
 		DWRITE_FONT_WEIGHT_REGULAR));
 	wsprintf(picpostext, PICPOS_FORMAT, picToScrRect.left, picToScrRect.top);
 	textcenterpos = ssfont->MeasureString(picpostext);
@@ -47,7 +47,7 @@ void GameLite::Init(ID3D11Device *pdevice, ID3D11DeviceContext *pcontext, ID2D1F
 
 	DXThrowIfFailed(CreateDWTextFormat(textformat, L"宋体", DWRITE_FONT_WEIGHT_NORMAL, 48.0f));
 	DXThrowIfFailed(CreateDWFontFace(fontface, textformat.Get()));
-	DXThrowIfFailed(CreateD2DGeometryFromText(btgeometry, d2ddevice, fontface.Get(), textformat.Get(), L"Hello!", 6));
+	DXThrowIfFailed(CreateD2DGeometryFromText(btgeometry, d2ddevice.Get(), fontface.Get(), textformat.Get(), L"Hello!", 6));
 	DXThrowIfFailed(textformat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER));
 	//textformat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 	circle.radiusX = circle.radiusY = 120.0f;
@@ -56,8 +56,6 @@ void GameLite::Init(ID3D11Device *pdevice, ID3D11DeviceContext *pcontext, ID2D1F
 void GameLite::Uninit()
 {
 	UninitD2D();
-	pic->Release();
-	pictext->Release();
 }
 
 void GameLite::InitD2D(IDXGISwapChain *pswchain)
@@ -96,8 +94,6 @@ void GameLite::InitD2D(IDXGISwapChain *pswchain)
 
 void GameLite::UninitD2D()
 {
-	circleBrush->Release();
-	outlineBrush->Release();
 }
 
 void GameLite::Update(float elapsedTime)
@@ -154,8 +150,8 @@ void GameLite::Draw()
 	//DXTK画图操作
 	spriteBatch->Begin();
 	mdBlock->Draw(matWorld, matView, matProjection);
-	spriteBatch->Draw(pic, picToScrRect);
-	spriteBatch->Draw(pictext, picTextToScrRect);
+	spriteBatch->Draw(pic.Get(), picToScrRect);
+	spriteBatch->Draw(pictext.Get(), picTextToScrRect);
 	ssfont->DrawString(spriteBatch.get(), picpostext, textpos, DirectX::Colors::White, 0.0f, textcenterpos);
 	spriteBatch->End();
 	if (d2drendertarget)
@@ -163,14 +159,14 @@ void GameLite::Draw()
 		//D2D画图操作
 		d2drendertarget->BeginDraw();
 		//Clear操作已由DXTK完成故不再需要调用ID2D1RenderTarget::Clear
-		DrawHPCircle(hpcircle.Get(), circle.point.x, circle.point.y, 6.0f, 2.0f, circleBrush, outlineBrush);
+		DrawHPCircle(hpcircle.Get(), circle.point.x, circle.point.y, 6.0f, 2.0f, circleBrush.Get(), outlineBrush.Get());
 		//D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT：绘制彩色文字，要求系统为Win8.1/10，在Win7中会使D2D区域无法显示
 		//D2D1_DRAW_TEXT_OPTIONS_NONE：不使用高级绘制选项
 		d2drendertarget->DrawText(cursorposText, lstrlen(cursorposText), textformat.Get(),
 			D2D1::RectF((float)screenSize.left, (float)screenSize.top, (float)screenSize.right,
-				(float)screenSize.bottom), circleBrush);
+				(float)screenSize.bottom), circleBrush.Get());
 		D2DDrawGeometryWithOutline(d2drendertarget.Get(), btgeometry.Get(), 0, (float)screenSize.bottom,
-			bluetowhiteBrush.Get(), outlineBrush, 1);
+			bluetowhiteBrush.Get(), outlineBrush.Get(), 1);
 		d2drendertarget->EndDraw();
 	}
 }
@@ -263,7 +259,7 @@ void GameLite::ToggleFullscreen(bool fullscreen)
 HRESULT GameLite::CreateHPCircle(Microsoft::WRL::ComPtr<ID2D1PathGeometry>& _circle, float r, float percent)
 {
 	circle.radiusX = circle.radiusY = r;
-	return CreateD2DArc(_circle, d2ddevice, r, 270.0f - 360.0f*percent, 270.0f);
+	return CreateD2DArc(_circle, d2ddevice.Get(), r, 270.0f - 360.0f*percent, 270.0f);
 }
 
 void GameLite::DrawHPCircle(ID2D1PathGeometry * _circle, float x, float y, float w, float bw,
@@ -297,7 +293,7 @@ int GameLite::GetHWNDWindowHeight()
 void GameLite::OnBeforePresent(IDXGISwapChain*swapChain)
 {
 	if (km.IsOnKeyDown(keyboard.get(),DirectX::Keyboard::P))
-		DXThrowIfFailed(TakeScreenShotToFile(d3ddevice,swapChain,L"shot.png"));
+		DXThrowIfFailed(TakeScreenShotToFile(d3ddevice.Get(),swapChain,L"shot.png"));
 	km.UpdateState(keyboard.get());
 }
 
