@@ -8,7 +8,7 @@
 #define PICPOS_FORMAT L"%4d,%4d"
 
 GameLite::GameLite():isFullscreen(false),circleBrush(),circle(),cursorposText(),d2ddevice(),d2drendertarget(),d3ddevice(),
-fcounter(0),hwndWindow(),hwndWindowInfo(),hwndWindowPlacement(),hwndWindowSize(),outlineBrush(),picpostext(),pic()
+fcounter(0),hwndWindow(),hwndWindowInfo(),hwndWindowPlacement(),hwndWindowSize(),outlineBrush(),picpostext(),pic(),pictext()
 {
 	screenSize.left = screenSize.top = 0;
 	screenSize.right = GAME_WINDOW_WIDTH;
@@ -25,6 +25,12 @@ void GameLite::Init(ID3D11Device *pdevice, ID3D11DeviceContext *pcontext, ID2D1F
 	spriteBatch = std::make_unique<DirectX::SpriteBatch>(pcontext);
 	DXThrowIfFailed(LoadTextureFromFile(d3ddevice,L"C:\\Program Files\\Windows Media Player\\Media Renderer\\DMR_120.png",
 		&pic, (int*)&picToScrRect.right, (int*)&picToScrRect.bottom));
+	DXThrowIfFailed(DrawTextToTexture(d3ddevice, TEXT("你好Hi!"), &pictext, (int*)&picTextToScrRect.right, (int*)&picTextToScrRect.bottom,
+		TEXT("宋体"), 48.0f, D2D1::ColorF(D2D1::ColorF::Yellow), DWRITE_FONT_WEIGHT_REGULAR));
+	picTextToScrRect.left = GetScreenWidth() - picTextToScrRect.right;
+	picTextToScrRect.top = GetScreenHeight() - picTextToScrRect.bottom;
+	picTextToScrRect.right += picTextToScrRect.left;
+	picTextToScrRect.bottom += picTextToScrRect.top;
 	keyboard = std::make_unique<DirectX::Keyboard>();
 	mouse = std::make_unique<DirectX::Mouse>();
 	mouse->SetWindow(hwnd);
@@ -41,7 +47,7 @@ void GameLite::Init(ID3D11Device *pdevice, ID3D11DeviceContext *pcontext, ID2D1F
 
 	DXThrowIfFailed(CreateDWTextFormat(textformat, L"宋体", DWRITE_FONT_WEIGHT_NORMAL, 48.0f));
 	DXThrowIfFailed(CreateDWFontFace(fontface, textformat.Get()));
-	DXThrowIfFailed(CreateD2DGeometryFromText(btgeometry, d2ddevice, fontface.Get(), textformat->GetFontSize(), L"Hello!", 6));
+	DXThrowIfFailed(CreateD2DGeometryFromText(btgeometry, d2ddevice, fontface.Get(), textformat.Get(), L"Hello!", 6));
 	DXThrowIfFailed(textformat->SetTextAlignment(DWRITE_TEXT_ALIGNMENT_CENTER));
 	//textformat->SetParagraphAlignment(DWRITE_PARAGRAPH_ALIGNMENT_CENTER);
 	circle.radiusX = circle.radiusY = 120.0f;
@@ -51,6 +57,7 @@ void GameLite::Uninit()
 {
 	UninitD2D();
 	pic->Release();
+	pictext->Release();
 }
 
 void GameLite::InitD2D(IDXGISwapChain *pswchain)
@@ -64,24 +71,33 @@ void GameLite::InitD2D(IDXGISwapChain *pswchain)
 	}
 	catch (HRESULT hr)
 	{
-		if (Win7PlatformUpdateCheck(hwndWindow, hr))
+		switch (Win7PlatformUpdateCheck(hwndWindow, hr))
+		{
+		case TRUE:
 			ExitProcess(hr);
-		else
+			break;
+		case FALSE:
 			throw hr;
+			break;
+		default:
+			break;
+		}
 	}
 	surface->Release();
 
-	DXThrowIfFailed(d2drendertarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &circleBrush));
-	DXThrowIfFailed(d2drendertarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::OrangeRed), &outlineBrush));
-	DXThrowIfFailed(CreateD2DLinearGradientBrush(bluetowhiteBrush, d2drendertarget, 0, -50, 0, 0,
-		D2D1::ColorF(D2D1::ColorF::Blue), D2D1::ColorF(D2D1::ColorF::White)));
+	if (d2drendertarget)
+	{
+		DXThrowIfFailed(d2drendertarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::White), &circleBrush));
+		DXThrowIfFailed(d2drendertarget->CreateSolidColorBrush(D2D1::ColorF(D2D1::ColorF::OrangeRed), &outlineBrush));
+		DXThrowIfFailed(CreateD2DLinearGradientBrush(bluetowhiteBrush, d2drendertarget.Get(), 0, -50, 0, 0,
+			D2D1::ColorF(D2D1::ColorF::Blue), D2D1::ColorF(D2D1::ColorF::White)));
+	}
 }
 
 void GameLite::UninitD2D()
 {
 	circleBrush->Release();
 	outlineBrush->Release();
-	d2drendertarget->Release();
 }
 
 void GameLite::Update(float elapsedTime)
@@ -139,20 +155,24 @@ void GameLite::Draw()
 	spriteBatch->Begin();
 	mdBlock->Draw(matWorld, matView, matProjection);
 	spriteBatch->Draw(pic, picToScrRect);
+	spriteBatch->Draw(pictext, picTextToScrRect);
 	ssfont->DrawString(spriteBatch.get(), picpostext, textpos, DirectX::Colors::White, 0.0f, textcenterpos);
 	spriteBatch->End();
-	//D2D画图操作
-	d2drendertarget->BeginDraw();
-	//Clear操作已由DXTK完成故不再需要调用ID2D1RenderTarget::Clear
-	DrawHPCircle(hpcircle.Get(), circle.point.x, circle.point.y, 6.0f, 2.0f, circleBrush, outlineBrush);
-	//D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT：绘制彩色文字，要求系统为Win8.1/10，在Win7中会使D2D区域无法显示
-	//D2D1_DRAW_TEXT_OPTIONS_NONE：不使用高级绘制选项
-	d2drendertarget->DrawText(cursorposText, lstrlen(cursorposText), textformat.Get(),
-		D2D1::RectF((float)screenSize.left, (float)screenSize.top, (float)screenSize.right,
-		(float)screenSize.bottom), circleBrush);
-	D2DDrawGeometryWithOutline(d2drendertarget, btgeometry.Get(), 0, (float)screenSize.bottom,
-		bluetowhiteBrush.Get(), outlineBrush, 1);
-	d2drendertarget->EndDraw();
+	if (d2drendertarget)
+	{
+		//D2D画图操作
+		d2drendertarget->BeginDraw();
+		//Clear操作已由DXTK完成故不再需要调用ID2D1RenderTarget::Clear
+		DrawHPCircle(hpcircle.Get(), circle.point.x, circle.point.y, 6.0f, 2.0f, circleBrush, outlineBrush);
+		//D2D1_DRAW_TEXT_OPTIONS_ENABLE_COLOR_FONT：绘制彩色文字，要求系统为Win8.1/10，在Win7中会使D2D区域无法显示
+		//D2D1_DRAW_TEXT_OPTIONS_NONE：不使用高级绘制选项
+		d2drendertarget->DrawText(cursorposText, lstrlen(cursorposText), textformat.Get(),
+			D2D1::RectF((float)screenSize.left, (float)screenSize.top, (float)screenSize.right,
+				(float)screenSize.bottom), circleBrush);
+		D2DDrawGeometryWithOutline(d2drendertarget.Get(), btgeometry.Get(), 0, (float)screenSize.bottom,
+			bluetowhiteBrush.Get(), outlineBrush, 1);
+		d2drendertarget->EndDraw();
+	}
 }
 
 void GameLite::PauseFromSystem()
@@ -249,7 +269,7 @@ HRESULT GameLite::CreateHPCircle(Microsoft::WRL::ComPtr<ID2D1PathGeometry>& _cir
 void GameLite::DrawHPCircle(ID2D1PathGeometry * _circle, float x, float y, float w, float bw,
 	ID2D1Brush * ic, ID2D1Brush * bc)
 {
-	D2DDrawPath(d2drendertarget, _circle, x, y, ic, w);
+	D2DDrawPath(d2drendertarget.Get(), _circle, x, y, ic, w);
 	d2drendertarget->DrawEllipse(D2D1::Ellipse(circle.point, circle.radiusX + w / 2, circle.radiusY + w / 2), bc, bw);
 	d2drendertarget->DrawEllipse(D2D1::Ellipse(circle.point, circle.radiusX - w / 2, circle.radiusY - w / 2), bc, bw);
 }

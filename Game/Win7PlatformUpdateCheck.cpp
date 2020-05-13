@@ -192,9 +192,12 @@ BOOL Win7PlatformUpdateCheck(HWND hwnd, HRESULT hr)
 			{
 				if (!IsWindows8OrGreater())
 				{
-					if (MessageBox(hwnd, TEXT("您需要安装 Windows 7 平台更新 (KB2670838) 才能运行本程序，是否现在下载安装？\n"
-						"You need to install Platform Update for Windows 7 (KB2670838) to run this program, do you want to download and install?"), NULL, MB_ICONEXCLAMATION | MB_YESNO) == IDYES)
+					int r = MessageBox(hwnd, TEXT("您需要安装 Windows 7 平台更新 (KB2670838) 才能运行本程序，是否现在下载安装？\n"
+						"You need to install Platform Update for Windows 7 (KB2670838) to run this program, do you want to download and install?"), NULL, MB_ICONEXCLAMATION | MB_YESNOCANCEL);
+					if (r == IDYES)
 						DownloadPatch(hwnd);
+					else if (r == IDCANCEL)
+						return 2;
 					return TRUE;
 				}
 			}
