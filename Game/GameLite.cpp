@@ -69,10 +69,13 @@ void GameLite::InitD2D(IDXGISwapChain *pswchain)
 	}
 	catch (HRESULT hr)
 	{
-		if(Win7PlatformUpdateCheck(hwndWindow, hr))
-			ExitProcess(hr);
-		else if(MessageBox(hwndWindow,TEXT("中断？"),NULL,MB_YESNO)==IDYES)
-			throw hr;
+		if (MessageBox(hwndWindow, TEXT("是否继续运行？"), NULL, MB_YESNO) == IDNO)
+		{
+			if (Win7PlatformUpdateCheck(hwndWindow, hr))
+				ExitProcess(hr);
+			else
+				throw hr;
+		}
 	}
 	surface->Release();
 
