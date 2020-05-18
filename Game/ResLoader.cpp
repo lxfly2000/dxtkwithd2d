@@ -18,7 +18,7 @@ using namespace DirectX;
 int PointToDip(int pointsize)
 {
 	//https://www.codeproject.com/articles/376597/outline-text-with-directwrite#source
-	//原则上第二个参数应为GetDeviceCaps(GetDC(NULL), LOGPIXELSX),但此处是用于游戏，且游戏通常不考虑DPI，因此直接指定96
+	//原则上第二个参数应为GetDeviceCaps(GetDC(NULL), LOGPIXELSX或LOGPIXELSY),但此处是用于游戏，且游戏通常不考虑DPI，因此直接指定96
 	return MulDiv(pointsize, USER_DEFAULT_SCREEN_DPI, 72);
 }
 
