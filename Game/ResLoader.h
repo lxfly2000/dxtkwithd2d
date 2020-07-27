@@ -44,10 +44,16 @@ HRESULT WicBitmapConvertPremultiplyAlpha(IWICBitmap *wicbitmap,
 HRESULT CreateD2DImageFromFile(Microsoft::WRL::ComPtr<ID2D1Bitmap> &pic, ID2D1RenderTarget *prt, LPCWSTR ppath);
 //————————DWrite函数————————
 //需要引入库 DWrite.lib.
+///<summary>创建DWrite字体格式。</summary>
+///<param name="readingDirection">每行的阅读方向，默认从左到右。</param>
+///<param name="flowDirection">段落的阅读方向，默认从上到下。</param>
+///<remarks>例如常见的日漫及旧书籍的阅读方向为从上到下，从右到左，则行阅读方向为从上到下，段落阅读方向为从右到左。</remarks>
 HRESULT CreateDWTextFormat(Microsoft::WRL::ComPtr<IDWriteTextFormat> &textformat,
 	LPCWSTR fontName, DWRITE_FONT_WEIGHT fontWeight,
 	FLOAT fontSize, DWRITE_FONT_STYLE fontStyle = DWRITE_FONT_STYLE_NORMAL,
-	DWRITE_FONT_STRETCH fontExpand = DWRITE_FONT_STRETCH_NORMAL, LPCWSTR localeName = L"");
+	DWRITE_FONT_STRETCH fontExpand = DWRITE_FONT_STRETCH_NORMAL, LPCWSTR localeName = L"",
+	DWRITE_READING_DIRECTION readingDirection=DWRITE_READING_DIRECTION_LEFT_TO_RIGHT,
+	DWRITE_FLOW_DIRECTION flowDirection=DWRITE_FLOW_DIRECTION_TOP_TO_BOTTOM);
 //【注意】字体名称必须保证是有效的。
 HRESULT CreateDWFontFace(Microsoft::WRL::ComPtr<IDWriteFontFace> &fontface, LPCWSTR fontName,
 	DWRITE_FONT_WEIGHT fontWeight, DWRITE_FONT_STYLE fontStyle, DWRITE_FONT_STRETCH fontExpand);

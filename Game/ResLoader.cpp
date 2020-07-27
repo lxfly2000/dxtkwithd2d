@@ -458,12 +458,15 @@ HRESULT CreateD2DImageFromFile(ComPtr<ID2D1Bitmap> &pic, ID2D1RenderTarget *prt,
 
 HRESULT CreateDWTextFormat(ComPtr<IDWriteTextFormat> &textformat,
 	LPCWSTR fontName, DWRITE_FONT_WEIGHT fontWeight,
-	FLOAT fontSize, DWRITE_FONT_STYLE fontStyle, DWRITE_FONT_STRETCH fontExpand, LPCWSTR localeName)
+	FLOAT fontSize, DWRITE_FONT_STYLE fontStyle, DWRITE_FONT_STRETCH fontExpand, LPCWSTR localeName,
+	DWRITE_READING_DIRECTION readingDirection,DWRITE_FLOW_DIRECTION flowDirection)
 {
 	ComPtr<IDWriteFactory> dwfactory;
 	C(DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(dwfactory), (IUnknown**)&dwfactory));
 	C(dwfactory->CreateTextFormat(fontName, NULL, fontWeight, fontStyle, fontExpand, PointToDip(fontSize), localeName,
 		textformat.ReleaseAndGetAddressOf()));
+	C(textformat->SetReadingDirection(readingDirection));
+	C(textformat->SetFlowDirection(flowDirection));
 	return S_OK;
 }
 
