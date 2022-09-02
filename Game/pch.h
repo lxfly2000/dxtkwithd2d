@@ -6,7 +6,7 @@
 #pragma once
 
 #include <WinSDKVer.h>
-#define _WIN32_WINNT 0x0601
+#define _WIN32_WINNT 0x0602
 #include <SDKDDKVer.h>
 
 // Use the C++ standard templated min/max
@@ -31,8 +31,10 @@
 
 #include <wrl/client.h>
 
-#include <d3d11.h>
-#include <dxgi.h>
+#include <d2d1_2.h>
+#include <d3d11_2.h>
+#include <dcomp.h>
+#include <dxgi1_3.h>
 #include <DirectXMath.h>
 #include <DirectXColors.h>
 

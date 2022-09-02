@@ -54,13 +54,17 @@ private:
     Microsoft::WRL::ComPtr<ID3D11Device>            m_d3dDevice;
     Microsoft::WRL::ComPtr<ID3D11DeviceContext>     m_d3dContext;
 
-    Microsoft::WRL::ComPtr<IDXGISwapChain>          m_swapChain;
+    Microsoft::WRL::ComPtr<IDXGISwapChain1>         m_swapChain;
     Microsoft::WRL::ComPtr<ID3D11RenderTargetView>  m_renderTargetView;
     Microsoft::WRL::ComPtr<ID3D11DepthStencilView>  m_depthStencilView;
 
     // Rendering loop timer.
     DX::StepTimer                                   m_timer;
 
-	Microsoft::WRL::ComPtr<ID2D1Factory>            m_d2dFactory;
+	Microsoft::WRL::ComPtr<ID2D1Factory2>           m_d2dFactory;
 	GameLite mygame;//这才叫“我的”游戏嘛！
+
+	Microsoft::WRL::ComPtr<IDCompositionDevice>     m_dCompDevice;
+	Microsoft::WRL::ComPtr<IDCompositionTarget>     m_composTarget;
+	Microsoft::WRL::ComPtr<IDCompositionVisual>     m_dCompVisual;
 };

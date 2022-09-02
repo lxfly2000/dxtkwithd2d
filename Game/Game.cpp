@@ -116,6 +116,7 @@ void Game::Present()
     {
         DXThrowIfFailed(hr);
     }
+	DXThrowIfFailed(m_dCompDevice->Commit());
 }
 
 // Message handlers
@@ -226,9 +227,14 @@ void Game::CreateDevice()
 
     DXThrowIfFailed(device.As(&m_d3dDevice));
     DXThrowIfFailed(context.As(&m_d3dContext));
+	ComPtr<IDXGIDevice>dxgiDevice;
+	DXThrowIfFailed(m_d3dDevice.As(&dxgiDevice));
+	DXThrowIfFailed(DCompositionCreateDevice(dxgiDevice.Get(), IID_PPV_ARGS(&m_dCompDevice)));
+	DXThrowIfFailed(m_dCompDevice->CreateTargetForHwnd(m_window, FALSE, &m_composTarget));
+	DXThrowIfFailed(m_dCompDevice->CreateVisual(&m_dCompVisual));
 
 	//创建设备相关资源
-	ComPtr<ID2D1Factory> d2dFactory;
+	ComPtr<ID2D1Factory2> d2dFactory;
 	DXThrowIfFailed(D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, d2dFactory.ReleaseAndGetAddressOf()));
 	DXThrowIfFailed(d2dFactory.As(&m_d2dFactory));
 	mygame.Init(m_d3dDevice.Get(), m_d3dContext.Get(), m_d2dFactory.Get(), m_window);
@@ -280,27 +286,26 @@ void Game::CreateResources()
         DXThrowIfFailed(dxgiDevice->GetAdapter(dxgiAdapter.GetAddressOf()));
 
         // And obtain the factory object that created it.
-        ComPtr<IDXGIFactory> dxgiFactory;
+        ComPtr<IDXGIFactory2> dxgiFactory;
         DXThrowIfFailed(dxgiAdapter->GetParent(IID_PPV_ARGS(dxgiFactory.GetAddressOf())));
 
         // Create a descriptor for the swap chain.
-        DXGI_SWAP_CHAIN_DESC swapChainDesc = {};
-        swapChainDesc.BufferDesc.Width = backBufferWidth;
-        swapChainDesc.BufferDesc.Height = backBufferHeight;
-        swapChainDesc.BufferDesc.Format = backBufferFormat;
-        swapChainDesc.BufferDesc.RefreshRate.Denominator = 60;
-        swapChainDesc.BufferDesc.RefreshRate.Numerator = 1;
+        DXGI_SWAP_CHAIN_DESC1 swapChainDesc = {};
+        swapChainDesc.Width = backBufferWidth;
+        swapChainDesc.Height = backBufferHeight;
+        swapChainDesc.Format = backBufferFormat;
         swapChainDesc.SampleDesc.Count = 1;
         swapChainDesc.SampleDesc.Quality = 0;
         swapChainDesc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
         swapChainDesc.BufferCount = backBufferCount;
-        swapChainDesc.OutputWindow = m_window;
-        swapChainDesc.Windowed = TRUE;
+		swapChainDesc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+		swapChainDesc.AlphaMode = DXGI_ALPHA_MODE_PREMULTIPLIED;
 
         // Create a SwapChain from a Win32 window.
-        DXThrowIfFailed(dxgiFactory->CreateSwapChain(
+        DXThrowIfFailed(dxgiFactory->CreateSwapChainForComposition(
             m_d3dDevice.Get(),
             &swapChainDesc,
+			nullptr,
             m_swapChain.ReleaseAndGetAddressOf()
             ));
 
@@ -324,6 +329,9 @@ void Game::CreateResources()
 
     CD3D11_DEPTH_STENCIL_VIEW_DESC depthStencilViewDesc(D3D11_DSV_DIMENSION_TEXTURE2D);
     DXThrowIfFailed(m_d3dDevice->CreateDepthStencilView(depthStencil.Get(), &depthStencilViewDesc, m_depthStencilView.ReleaseAndGetAddressOf()));
+
+	DXThrowIfFailed(m_dCompVisual->SetContent(m_swapChain.Get()));
+	DXThrowIfFailed(m_composTarget->SetRoot(m_dCompVisual.Get()));
 
 	//更新资源属性
 	mygame.OnUpdateResProp(backBufferWidth, backBufferHeight, m_swapChain.Get());
