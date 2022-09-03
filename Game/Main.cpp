@@ -73,6 +73,8 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
             nullptr);
         // TODO: Change to CreateWindowEx(WS_EX_TOPMOST, L"Direct3DWin32GameWindowClass", L"Direct3DWin32Game", WS_POPUP,
         // to default to fullscreen.
+		SetWindowLong(hwnd, GWL_STYLE, WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_SYSMENU);
+		SetWindowPos(hwnd, NULL, 0, 0, 0, 0, SWP_NOMOVE | SWP_NOSIZE | SWP_NOZORDER | SWP_FRAMECHANGED);
 
         if (!hwnd)
             return 1;
